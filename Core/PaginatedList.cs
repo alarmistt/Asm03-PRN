@@ -20,6 +20,8 @@ namespace Core
         }
         public bool HasPreviousPage => PageNumber > 1;
         public bool HasNextPage => PageNumber < TotalPages;
+
+        // CreateAsync method is used to paging for IQueryable
         public static async Task<PaginatedList<T>> CreateAsync(IQueryable<T> source, int pageNumber, int pageSize)
         {
             var count = await source.CountAsync();
@@ -27,6 +29,8 @@ namespace Core
 
             return new PaginatedList<T>(items, count, pageNumber, pageSize);
         }
+
+        // CreateAsync method is used to paging for List
         public static PaginatedList<T> Create(List<T> source, int pageNumber, int pageSize)
         {
             var totalCount = source.Count;
