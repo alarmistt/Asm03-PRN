@@ -1,6 +1,7 @@
 ﻿using BusinessObject.Base;
 using BusinessObject.Entities;
 using DataAccess.Interface;
+using Microsoft.EntityFrameworkCore;
 
 namespace DataAccess.Implement
 {
@@ -26,14 +27,34 @@ namespace DataAccess.Implement
             return true;
         }
 
-        public Task<bool> DeleteMember(int memberId)
+        public async Task<bool> DeleteMember(int memberId)
         {
-            throw new NotImplementedException();
+            var exist = await _context.Member.FindAsync(memberId);
+            if (exist != null)
+            {
+                _context.Member.Remove(exist);
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+
         }
 
-        public Task<Member> GetMember(int memberId)
+        public async Task<Member> GetMember(int memberId)
         {
-            throw new NotImplementedException();
+            var member = await _context.Member.FindAsync(memberId);
+
+            if (member != null)
+            {
+                return member;
+            }
+            else
+            {
+                return null;
+            }
         }
 
         public Task<IEnumerable<Member>> GetMembers()
@@ -55,9 +76,21 @@ namespace DataAccess.Implement
             }
         }
 
-        public Task<bool> UpdateMember(Member member)
+        public async Task<bool> UpdateMember(Member member)
         {
-            throw new NotImplementedException();
+            var exist = await _context.Member
+                .FirstOrDefaultAsync(x => x.MemberId == member.MemberId);
+
+            if (exist != null)
+            {
+                _context.Entry(exist).CurrentValues.SetValues(member);
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
     }
 }
