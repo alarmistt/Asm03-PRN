@@ -1,0 +1,34 @@
+﻿@page "/login"
+@using Services.Interface
+@inject IAuthenticationService AuthService
+@inject NavigationManager NavManager
+
+<h3>Đăng nhập</h3>
+
+@if (!string.IsNullOrEmpty(ErrorMessage))
+{
+    <p style="color:red">@ErrorMessage</p>
+}
+
+<input @bind="Username" placeholder="Nhập username" />
+<input @bind="Password" type="password" placeholder="Nhập mật khẩu" />
+<button @onclick="PerformLogin">Đăng nhập</button>
+
+@code {
+    private string Username { get; set; } = "";
+    private string Password { get; set; } = "";
+    private string ErrorMessage { get; set; } = "";
+
+    private async Task PerformLogin()
+    {
+        var result = await AuthService.LoginAsync(Username, Password);
+        if (result)
+        {
+            NavManager.NavigateTo("/"); 
+        }
+        else
+        {
+            ErrorMessage = "Login fail.";
+        }
+    }
+}
