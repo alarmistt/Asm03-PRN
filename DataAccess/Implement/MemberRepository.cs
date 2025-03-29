@@ -1,6 +1,7 @@
 ﻿using BusinessObject.Base;
 using BusinessObject.Entities;
 using DataAccess.Interface;
+using Microsoft.EntityFrameworkCore;
 
 namespace DataAccess.Implement
 {
@@ -53,6 +54,11 @@ namespace DataAccess.Implement
             {
                 return null;
             }
+        }
+
+        public async Task<Member?> Login(string email, string password)
+        {
+            return await _context.Member.FirstOrDefaultAsync(x => x.Email == email && x.Password == password);
         }
 
         public Task<bool> UpdateMember(Member member)

@@ -7,7 +7,7 @@
   </PropertyGroup>
 	<ItemGroup>
 		<PackageReference Include="AutoMapper" Version="14.0.0" />
-		<PackageReference Include="Microsoft.AspNetCore.Http" Version="2.3.0" />
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.8" />
 			<PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.8" />
 			<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.8">
 			  <PrivateAssets>all</PrivateAssets>
@@ -21,6 +21,7 @@
 		<PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0" />
 		<PackageReference Include="Microsoft.AspNetCore.SignalR.Core" Version="1.2.0" />
+		<PackageReference Include="Blazored.SessionStorage" Version="2.3.0" />
 	</ItemGroup>
 
 </Project>
