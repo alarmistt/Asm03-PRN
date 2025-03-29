@@ -6,7 +6,8 @@ using System.Threading.Tasks;
 
 namespace Services.Interface
 {
-    internal interface IMemberManagementSer
+    public interface IMemberService
     {
+        Task<bool> Login(string username, string password);
     }
 }
