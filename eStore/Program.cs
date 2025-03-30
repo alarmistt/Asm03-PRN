@@ -6,6 +6,7 @@ using eStore.DI;
 using Services.Implement;
 using Services.Interface;
 
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRazorComponents()
@@ -13,10 +14,19 @@ builder.Services.AddRazorComponents()
 builder.Services.AddBlazoredSessionStorage();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddAuthorization();
+
+builder.Services.AddServerSideBlazor();
+
+
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 builder.Services.AddScoped<IMemeberRepository, MemberRepository>();
 builder.Services.AddScoped<IMemberService, MemberService>();
 builder.Services.AddScoped<IVnPayService, VnPayService>();
+
+builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("https://yourapi.com") });
+
 
 var app = builder.Build();
 

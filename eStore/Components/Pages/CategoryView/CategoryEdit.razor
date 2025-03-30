@@ -1,0 +1,97 @@
+﻿@page "/category/edit/{CategoryId:int?}"
+@using BusinessObject.Entities
+@using Services.Interface
+@inject ICategoryService CategoryService
+@inject NavigationManager NavigationManager
+
+@rendermode InteractiveServer
+
+<div class="container mt-5">
+    <div class="card shadow-sm border-0 rounded" style="background-color: #f8f9fa;">
+        <div class="card-header text-white text-center py-3 rounded-top" style="background-color: #6c757d;">
+            <h3 class="mb-0">@(CategoryId == null ? "Create Category" : "Edit Category")</h3>
+        </div>
+        <div class="card-body">
+            <EditForm Model="category" OnValidSubmit="HandleValidSubmit">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="mb-3">
+                    <label for="CategoryName" class="form-label fw-bold">Category Name</label>
+                    <InputText id="CategoryName" class="form-control" @bind-Value="category.CategoryName" />
+                </div>
+                <div class="mb-3">
+                    <label for="Description" class="form-label fw-bold">Description</label>
+                    <InputText id="Description" class="form-control" @bind-Value="category.Description" />
+                </div>
+
+                <div class="d-flex justify-content-end">
+                    <button type="submit" class="btn btn-success me-2">
+                        <i class="bi bi-save"></i> Save
+                    </button>
+                    <button type="button" class="btn btn-danger" @onclick="Cancel">
+                        <i class="bi bi-x-circle"></i> Cancel
+                    </button>
+                </div>
+            </EditForm>
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="alert alert-danger mt-3">@errorMessage</div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public int? CategoryId { get; set; }
+
+    private Category category = new();
+    private string errorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (CategoryId.HasValue)
+        {
+            try
+            {
+                category = await CategoryService.GetCategory(CategoryId.Value);
+                Console.WriteLine($"Loaded category: {category.CategoryName}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading category: {ex.Message}");
+            }
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            if (CategoryId.HasValue)
+            {
+                Console.WriteLine($"Updating category: {category.CategoryId}");
+                await CategoryService.UpdateCategory(category);
+            }
+            else
+            {
+                Console.WriteLine("Creating new category");
+                await CategoryService.AddCategory(category);
+            }
+
+            NavigationManager.NavigateTo("/categories");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error saving category: {ex.Message}";
+            Console.WriteLine(errorMessage);
+        }
+    }
+
+    private void Cancel()
+    {
+        NavigationManager.NavigateTo("/categories");
+    }
+}
+
