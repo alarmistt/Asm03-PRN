@@ -1,13 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using BusinessObject.Entities;
 
 namespace Services.Interface
 {
     public interface IMemberService
     {
         Task<bool> Login(string username, string password);
+
+        Task<bool> AddMember(Member member);
+        Task<bool> UpdateMember(Member member);
+        Task<bool> DeleteMember(int memberId);
+        Task<Member> GetMember(int memberId);
+        Task<IEnumerable<Member>> GetMembers();
+
     }
 }

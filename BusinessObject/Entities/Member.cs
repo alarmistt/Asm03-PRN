@@ -7,16 +7,16 @@ namespace BusinessObject.Entities
         [Key]
         public int MemberId { get; set; }
 
-        [Required, EmailAddress]
+        [Required]
         public string Email { get; set; }
 
-        [Required, StringLength(40)]
+        [Required]
         public string CompanyName { get; set; }
 
-        [Required, StringLength(15)]
+        [Required]
         public string City { get; set; }
 
-        [Required, StringLength(15)]
+        [Required]
         public string Country { get; set; }
 
         [Required, StringLength(30), MinLength(6)]

@@ -14,9 +14,9 @@ namespace DataAccess.Implement
             _context = context;
         }
 
-        public async Task<bool> AddMemberAsync(Member member)
+        public async Task<bool> AddMember(Member member)
         {
-            var exist = await _context.Member.FindAsync(member.Email);
+            var exist = await _context.Member.FirstOrDefaultAsync(m => m.Email == member.Email);
 
             if (exist != null)
             {
@@ -57,9 +57,10 @@ namespace DataAccess.Implement
             }
         }
 
-        public Task<IEnumerable<Member>> GetMembers()
+        public async Task<IEnumerable<Member>> GetMembers()
         {
-            throw new NotImplementedException();
+            var members = await _context.Member.ToListAsync();
+            return members;
         }
 
         public async Task<Member> GetMembersByEmailAddress(string emailAddress)
@@ -76,21 +77,26 @@ namespace DataAccess.Implement
             }
         }
 
+        public async Task<Member?> Login(string email, string password)
+        {
+            return await _context.Member.FirstOrDefaultAsync(x => x.Email == email && x.Password == password);
+        }
+
         public async Task<bool> UpdateMember(Member member)
         {
-            var exist = await _context.Member
-                .FirstOrDefaultAsync(x => x.MemberId == member.MemberId);
+            var exist = _context.Member.FindAsync(member.MemberId);
 
             if (exist != null)
             {
-                _context.Entry(exist).CurrentValues.SetValues(member);
-                await _context.SaveChangesAsync();
+                _context.Member.Update(member);
+                _context.SaveChangesAsync();
                 return true;
             }
             else
             {
                 return false;
             }
+
         }
     }
 }
