@@ -1,0 +1,276 @@
+﻿
+@page "/products"
+@using BusinessObject.Entities
+@using Services.Interface
+@inject IProductService ProductService
+@inject ICategoryService CategoryService
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JS
+
+@rendermode InteractiveServer
+
+<div class="container my-5">
+    <div class="card border-0 shadow" style="border-radius: 12px; background-color: #ffffff;">
+        <!-- Header -->
+        <div class="card-header py-4 px-5" style="background: linear-gradient(135deg, #4B5EAA, #6B7280); color: white; border-radius: 12px 12px 0 0;">
+            <div class="d-flex justify-content-between align-items-center">
+                <h3 class="mb-0 fw-normal">Product Management</h3>
+                <button class="btn btn-light btn-sm px-4 fw-medium shadow-sm" style="border-radius: 20px; display: flex; align-items: center; justify-content: center;" @onclick="CreateProduct">
+                    <i class="bi bi-plus-lg me-2"></i> Add Product
+                </button>
+            </div>
+        </div>
+
+        <!-- Search Section -->
+        <div class="px-5 pt-4">
+            <div class="row g-3 mb-4">
+                <div class="col-md-5">
+                    <div class="input-group shadow-sm" style="border-radius: 20px; overflow: hidden;">
+                        <span class="input-group-text border-0" style="background-color: #f3f4f6;">
+                            <i class="bi bi-search text-muted"></i>
+                        </span>
+                        <input type="text" class="form-control border-0" placeholder="Search by product name" @bind="searchName" />
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="input-group shadow-sm" style="border-radius: 20px; overflow: hidden;">
+                        <span class="input-group-text border-0" style="background-color: #f3f4f6;">
+                            <i class="bi bi-currency-dollar text-muted"></i>
+                        </span>
+                        <input type="text" class="form-control border-0" placeholder="Search by unit price" @bind="searchPriceText" />
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn w-100 fw-medium shadow-sm" style="background-color: #4B5EAA; color: white; border-radius: 20px; display: flex; align-items: center; justify-content: center;" @onclick="SearchProducts">
+                        Search
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Body -->
+        <div class="card-body px-5 pb-5">
+            @if (filteredProducts == null || !filteredProducts.Any())
+            {
+                <div class="text-center py-5">
+                    <i class="bi bi-box2-heart display-4 text-muted"></i>
+                    <p class="text-muted mt-3 fs-5">
+                        @(string.IsNullOrEmpty(searchName) && string.IsNullOrEmpty(searchPriceText)
+                            ? "Your product list is empty. Add a new product to get started!"
+                            : "No products found matching your criteria.")
+                    </p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive" style="border-radius: 12px; overflow: hidden;">
+                    <table class="table table-hover align-middle" style="background-color: #ffffff;">
+                        <thead style="background-color: #f3f4f6; color: #374151;">
+                            <tr>
+                                <th scope="col" class="py-3">ID</th>
+                                <th scope="col" class="py-3">Category</th>
+                                <th scope="col" class="py-3">Name</th>
+                                <th scope="col" class="py-3">Weight</th>
+                                <th scope="col" class="py-3">Unit Price</th>
+                                <th scope="col" class="py-3">In Stock</th>
+                                <th scope="col" class="py-3">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var product in filteredProducts)
+                            {
+                                <tr class="table-row">
+                                    <td class="fw-medium" style="color: #4B5EAA;">@product.ProductId</td>
+                                    <td>@categories.FirstOrDefault(c => c.CategoryId == product.CategoryId)?.CategoryName</td>
+                                    <td>@product.ProductName</td>
+                                    <td>@product.Weight</td>
+                                    <td style="color: #16a34a; font-weight: 500;">@product.UnitPrice.ToString("C")</td>
+                                    <td>
+                                        <span class="badge px-3 py-1" style="@(product.UnitsInStock > 0 ? "background-color: #dcfce7; color: #16a34a;" : "background-color: #fee2e2; color: #dc2626;") border-radius: 20px;">
+                                            @product.UnitsInStock
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-outline-primary btn-sm px-3 fw-medium me-2" style="border-radius: 20px; display: flex; align-items: center; justify-content: center;" @onclick="() => EditProduct(product.ProductId)">
+                                            <i class="bi bi-pencil me-1"></i> Edit
+                                        </button>
+                                        <button class="btn btn-outline-danger btn-sm px-3 fw-medium" style="border-radius: 20px; display: flex; align-items: center; justify-content: center;" @onclick="() => ShowDeleteModal(product.ProductId)">
+                                            <i class="bi bi-trash me-1"></i> Delete
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+@if (showDeleteModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);">
+                <div class="modal-header" style="background-color: #fef2f2; border-bottom: none; border-radius: 12px 12px 0 0;">
+                    <h5 class="modal-title fw-medium text-danger">Confirm Deletion</h5>
+                    <button type="button" class="btn-close" @onclick="HideDeleteModal"></button>
+                </div>
+                <div class="modal-body py-4 px-5">
+                    @if (!string.IsNullOrEmpty(deleteErrorMessage))
+                    {
+                        <div class="alert alert-danger mb-3" style="border-radius: 8px;">@deleteErrorMessage</div>
+                    }
+                    else
+                    {
+                        <p class="mb-0 text-muted">Are you sure you want to delete this product? This action cannot be undone.</p>
+                    }
+                </div>
+                <div class="modal-footer border-0 pt-0 px-5 pb-4">
+                    <button type="button" class="btn btn-secondary px-4 fw-medium" style="border-radius: 20px; display: flex; align-items: center; justify-content: center;" @onclick="HideDeleteModal">
+                        Cancel
+                    </button>
+                    @if (string.IsNullOrEmpty(deleteErrorMessage))
+                    {
+                        <button type="button" class="btn btn-danger px-4 fw-medium" style="border-radius: 20px; display: flex; align-items: center; justify-content: center;" @onclick="ConfirmDelete">
+                            Delete
+                        </button>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    .table-row:hover {
+        background-color: #f9fafb;
+        transition: background-color 0.2s ease;
+    }
+
+    .card {
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+    }
+
+    th, td {
+        border: none !important;
+        padding: 12px 16px !important;
+    }
+
+    .btn {
+        transition: all 0.2s ease;
+    }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+    .form-control:focus {
+        border-color: #4B5EAA;
+        box-shadow: 0 0 8px rgba(75, 94, 170, 0.2);
+    }
+
+    .input-group, .form-control {
+        background-color: #ffffff;
+    }
+
+    .modal-content {
+        border: none;
+    }
+</style>
+
+@code {
+    private List<Product> products = new();
+    private List<Product> filteredProducts = new();
+    private List<Category> categories = new();
+    private string searchName = "";
+    private string searchPriceText = ""; // Changed from decimal? to string
+    private bool showDeleteModal = false;
+    private int productIdToDelete;
+    private string deleteErrorMessage = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProducts();
+    }
+
+    private async Task LoadProducts()
+    {
+        try
+        {
+            products = (await ProductService.GetAllProductsAsync()).ToList();
+            categories = (await CategoryService.GetCategories()).ToList();
+            FilterProducts();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching products: {ex.Message}");
+        }
+    }
+
+    private void FilterProducts()
+    {
+        filteredProducts = products.Where(p =>
+            (string.IsNullOrEmpty(searchName) || p.ProductName.Contains(searchName, StringComparison.OrdinalIgnoreCase)) &&
+            (string.IsNullOrEmpty(searchPriceText) || p.UnitPrice.ToString().Contains(searchPriceText))
+        ).ToList();
+    }
+
+    private void SearchProducts()
+    {
+        FilterProducts();
+        StateHasChanged();
+    }
+
+    private void CreateProduct()
+    {
+        NavigationManager.NavigateTo("/product/addnew");
+    }
+
+    private void EditProduct(int productId)
+    {
+        NavigationManager.NavigateTo($"/product/edit/{productId}");
+    }
+
+    private void ShowDeleteModal(int productId)
+    {
+        productIdToDelete = productId;
+        deleteErrorMessage = ""; // Reset error message khi mở modal
+        showDeleteModal = true;
+    }
+
+    private void HideDeleteModal()
+    {
+        showDeleteModal = false;
+        deleteErrorMessage = ""; // Reset error message khi đóng modal
+    }
+
+    private async Task ConfirmDelete()
+    {
+        try
+        {
+            // Kiểm tra xem sản phẩm có trong OrderDetail hay không
+            bool isProductInOrder = await ProductService.CheckProductInOrderDetailsAsync(productIdToDelete);
+            if (isProductInOrder)
+            {
+                deleteErrorMessage = "This product cannot be deleted because it is referenced in an order.";
+                StateHasChanged();
+                return;
+            }
+
+            await ProductService.DeleteProductAsync(productIdToDelete);
+            await LoadProducts();
+            showDeleteModal = false;
+        }
+        catch (Exception ex)
+        {
+            deleteErrorMessage = $"Error deleting product: {ex.Message}";
+            Console.WriteLine($"Error deleting product: {ex.Message}");
+            StateHasChanged();
+        }
+    }
+}

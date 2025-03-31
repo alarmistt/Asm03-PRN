@@ -12,8 +12,10 @@ namespace Services.Interface
         Task<IEnumerable<Product>> GetAllProductsAsync();
         Task<Product> GetProductByIdAsync(int id);
         Task<Product> CreateProductAsync(Product product);
-        Task UpdateProductAsync(Product product);
-        Task DeleteProductAsync(int id);
-        Task<IEnumerable<Product>> SearchProductsAsync(string productName, decimal? unitPrice);
+        Task<Product> UpdateProductAsync(Product product);
+        Task<bool> DeleteProductAsync(int id);
+
+        Task<bool> CheckProductInOrderDetailsAsync(int id);
+        Task<IEnumerable<Product>> SearchProductsAsync(string name, decimal? unitPrice);
     }
 }
