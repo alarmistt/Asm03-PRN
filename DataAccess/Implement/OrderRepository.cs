@@ -21,49 +21,45 @@ namespace DataAccess.Implement
 
         public async Task<IEnumerable<Order>> GetAllAsync()
         {
-            return await _context.Set<Order>().Include(o => o.Member).Include(o => o.OrderDetails).ToListAsync();
+            return await _context.Order.Include(o => o.Member).Include(o => o.OrderDetails).ToListAsync();
         }
 
         public async Task<Order?> GetByIdAsync(int orderId)
         {
-            return await _context.Set<Order>().Include(o => o.Member).Include(o => o.OrderDetails)
+            return await _context.Order.Include(o => o.Member).Include(o => o.OrderDetails)
                                 .FirstOrDefaultAsync(o => o.OrderId == orderId);
         }
 
-        public async Task<bool> AddAsync(Order order)
+        public async Task<IEnumerable<Order>> GetOrdersByMemberIdAsync(int memberId)
         {
-            var exist = await _context.Set<Order>().FindAsync(order.OrderId);
-            if (exist != null)
-            {
-                throw new Exception("Order already exists");
-            }
-            await _context.Set<Order>().AddAsync(order);
+            return await _context.Order
+                .Where(o => o.MemberId == memberId)
+                .Include(o => o.OrderDetails)
+                .ToListAsync();
+        }
+
+        public async Task AddAsync(Order order)
+        {
+            await _context.Order.AddAsync(order);
             await _context.SaveChangesAsync();
-            return true;
         }
 
-        public async Task<bool> UpdateAsync(Order order)
+
+        public async Task UpdateAsync(Order order)
         {
-            var exist = await _context.Set<Order>().FindAsync(order.OrderId);
-            if (exist != null)
-            {
-                _context.Entry(exist).CurrentValues.SetValues(order);
-                await _context.SaveChangesAsync();
-                return true;
-            }
-            return false;
+            _context.Order.Update(order);
+            await _context.SaveChangesAsync();
         }
 
-        public async Task<bool> DeleteAsync(int orderId)
+        public async Task DeleteAsync(int orderId)
         {
-            var order = await _context.Set<Order>().FindAsync(orderId);
+            var order = await GetByIdAsync(orderId);
             if (order != null)
             {
-                _context.Set<Order>().Remove(order);
+                _context.Order.Remove(order);
                 await _context.SaveChangesAsync();
-                return true;
             }
-            return false;
         }
+
     }
 }
