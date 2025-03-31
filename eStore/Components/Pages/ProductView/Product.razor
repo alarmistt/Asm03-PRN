@@ -1,0 +1,290 @@
+﻿@page "/products"
+@using Services.Interface
+@inject IProductService ProductService
+@inject NavigationManager Navigation
+@using BusinessObject.Entities
+
+<h3>Product Management</h3>
+
+<EditForm Model="@searchModel" OnValidSubmit="HandleSearch">
+    <DataAnnotationsValidator />
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <label>Product Name</label>
+            <InputText @bind-Value="searchModel.ProductName" class="form-control" />
+        </div>
+        <div class="col-md-4">
+            <label>Unit Price</label>
+            <InputNumber @bind-Value="searchModel.UnitPrice" class="form-control" />
+        </div>
+        <div class="col-md-4">
+            <button type="submit" class="btn btn-primary mt-4">Search</button>
+            <button type="button" class="btn btn-success mt-4" @onclick="ShowAddModal">Add New</button>
+            @if (!string.IsNullOrEmpty(debugMessage))
+            {
+                <span class="text-info ms-2">@debugMessage</span>
+            }
+        </div>
+    </div>
+</EditForm>
+
+@if (products != null)
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Category</th>
+                <th>Unit Price</th>
+                <th>Stock</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var product in products)
+            {
+                <tr>
+                    <td>@product.ProductId</td>
+                    <td>@product.ProductName</td>
+                    <td>@product.Category?.CategoryName</td>
+                    <td>@product.UnitPrice</td>
+                    <td>@product.UnitsInStock</td>
+                    <td>
+                        <button class="btn btn-primary" @onclick="() => ShowEditModal(product)">Edit</button>
+                        <button class="btn btn-danger" @onclick="() => DeleteProduct(product.ProductId)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<!-- Modal Status Debug -->
+<div class="small text-muted mb-3">
+    <p>Modal Status: AddModal=@showAddModal, EditModal=@showEditModal</p>
+</div>
+
+<!-- Render Add Modal Component -->
+<Components.Pages.ProductView.AddProductModal IsVisible="@showAddModal" OnClose="@HideAddModal" OnSave="@HandleAddProduct" />
+
+<!-- Render Edit Modal Component -->
+<Components.Pages.ProductView.EditProductModal IsVisible="@showEditModal" Product="@selectedProduct" OnClose="@HideEditModal" OnSave="@HandleEditProduct" />
+
+<style>
+    /* Basic Table and Form Styles */
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .table th, .table td {
+        padding: 8px;
+        border: 1px solid #ddd;
+    }
+
+    .table th {
+        background-color: #f2f2f2;
+    }
+
+    .row {
+        display: flex;
+        flex-wrap: wrap;
+        margin: 0 -15px;
+    }
+
+    .col-md-4 {
+        flex: 0 0 33.33%;
+        padding: 0 15px;
+    }
+
+    .mt-4 {
+        margin-top: 1rem;
+    }
+
+    .ms-2 {
+        margin-left: 0.5rem;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 6px 12px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+
+    .btn {
+        padding: 6px 12px;
+        border-radius: 4px;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        color: white;
+    }
+
+    .btn-success {
+        background-color: #28a745;
+        color: white;
+    }
+
+    .btn-danger {
+        background-color: #dc3545;
+        color: white;
+    }
+
+    .text-info {
+        color: #17a2b8;
+    }
+
+    .text-muted {
+        color: #6c757d;
+    }
+
+    .small {
+        font-size: 0.875rem;
+    }
+</style>
+
+@code {
+    private List<BusinessObject.Entities.Product> products = new();
+    private SearchModel searchModel = new();
+    private BusinessObject.Entities.Product selectedProduct;
+    private bool showAddModal = false;
+    private bool showEditModal = false;
+    private string debugMessage = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        searchModel = new SearchModel();
+        await LoadProducts();
+    }
+
+    private async Task LoadProducts()
+    {
+        try
+        {
+            products = (await ProductService.GetAllProductsAsync()).ToList();
+            debugMessage = "Products loaded";
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            debugMessage = $"Error loading products: {ex.Message}";
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandleSearch()
+    {
+        try
+        {
+            products = (await ProductService.SearchProductsAsync(
+                searchModel.ProductName,
+                searchModel.UnitPrice)).ToList();
+            debugMessage = "Search completed";
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            debugMessage = $"Error searching products: {ex.Message}";
+            StateHasChanged();
+        }
+    }
+
+    private void ShowAddModal()
+    {
+        debugMessage = "Show Add Modal";
+        showAddModal = true;
+        StateHasChanged();
+    }
+
+    private void HideAddModal()
+    {
+        debugMessage = "Add Modal Closed";
+        showAddModal = false;
+        StateHasChanged();
+    }
+
+    private void ShowEditModal(BusinessObject.Entities.Product product)
+    {
+        debugMessage = "Show Edit Modal";
+        selectedProduct = new BusinessObject.Entities.Product
+        {
+            ProductId = product.ProductId,
+            ProductName = product.ProductName,
+            CategoryId = product.CategoryId,
+            Weight = product.Weight,
+            UnitPrice = product.UnitPrice,
+            UnitsInStock = product.UnitsInStock
+        };
+        showEditModal = true;
+        StateHasChanged();
+    }
+
+    private void HideEditModal()
+    {
+        debugMessage = "Edit Modal Closed";
+        showEditModal = false;
+        selectedProduct = null;
+        StateHasChanged();
+    }
+
+    private async Task HandleAddProduct(BusinessObject.Entities.Product product)
+    {
+        try
+        {
+            await ProductService.CreateProductAsync(product);
+            await LoadProducts();
+            showAddModal = false;
+            debugMessage = "Product added successfully";
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            debugMessage = $"Error adding product: {ex.Message}";
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandleEditProduct(BusinessObject.Entities.Product product)
+    {
+        try
+        {
+            await ProductService.UpdateProductAsync(product);
+            await LoadProducts();
+            showEditModal = false;
+            debugMessage = "Product updated successfully";
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            debugMessage = $"Error updating product: {ex.Message}";
+            StateHasChanged();
+        }
+    }
+
+    private async Task DeleteProduct(int id)
+    {
+        try
+        {
+            await ProductService.DeleteProductAsync(id);
+            await LoadProducts();
+            debugMessage = "Product deleted successfully";
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            debugMessage = $"Error deleting product: {ex.Message}";
+            StateHasChanged();
+        }
+    }
+
+    public class SearchModel
+    {
+        public string ProductName { get; set; }
+        public decimal? UnitPrice { get; set; }
+    }
+}
