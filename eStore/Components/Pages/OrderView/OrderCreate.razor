@@ -2,8 +2,10 @@
 @using BusinessObject.Entities
 @using Services.Interface
 @inject IOrderService OrderService
+@inject IMemberService MemberService
+@inject IProductService ProductService
 @inject NavigationManager NavigationManager
-
+<PageTitle>Order</PageTitle>
 @rendermode InteractiveServer
 
 <div class="container mt-5">
@@ -17,8 +19,14 @@
                 <ValidationSummary />
 
                 <div class="mb-3">
-                    <label for="memberId" class="form-label">Member ID</label>
-                    <InputNumber id="memberId" class="form-control" @bind-Value="order.MemberId" />
+                    <label for="memberId" class="form-label">Member</label>
+                    <InputSelect id="memberId" class="form-control" @bind-Value="order.MemberId">
+                        <option value="">-- Select Member --</option>
+                        @foreach (var member in Members)
+                        {
+                            <option value="@member.MemberId">@member.CompanyName</option>
+                        }
+                    </InputSelect>
                 </div>
 
                 <div class="mb-3">
@@ -41,20 +49,163 @@
                     <InputNumber id="freight" class="form-control" @bind-Value="order.Freight" />
                 </div>
 
-                <button type="submit" class="btn btn-primary">Create</button>
+                <h4>Order Details</h4>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Quantity</th>
+                            <th>Unit Price</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in order.OrderDetails)
+                        {
+                            <tr>
+                                <td>@Products.FirstOrDefault(p => p.ProductId == item.ProductId)?.ProductName</td>
+                                <td>@item.Quantity</td>
+                                <td>@item.UnitPrice</td>
+                                <td>
+                                    <button type="button" class="btn btn-danger btn-sm" @onclick="() => RemoveOrderDetail(item)">Remove</button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+
+                <div class="row">
+                    <div class="col-md-4">
+                        <label>Product</label>
+                        <InputSelect class="form-control" @bind-Value="newOrderDetail.ProductId" @onchange="UpdateUnitPrice">
+                            <option value="">-- Select Product --</option>
+                            @foreach (var product in Products)
+                            {
+                                <option value="@product.ProductId">@product.ProductName</option>
+                            }
+                        </InputSelect>
+                    </div>
+                    <div class="col-md-3">
+                        <label>Quantity</label>
+                        <InputNumber class="form-control"
+                                     @bind-Value="Quantity"
+                                     @bind-Value:event="oninput" />
+
+
+
+
+
+                    </div>
+                    <div class="col-md-3">
+                        <label>Unit Price</label>
+                        <!-- Hiển thị giá trị UnitPrice mà không cho phép chỉnh sửa -->
+                        <span class="form-control-plaintext">@newOrderDetail.UnitPrice.ToString("C")</span>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="button" class="btn btn-success" @onclick="AddOrderDetail">Add</button>
+                    </div>
+                </div>
+
+
+                <br />
+
+                <button type="submit" class="btn btn-primary">Create Order</button>
                 <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancel</button>
             </EditForm>
+            @if (string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="alert alert-danger mt-3">@errorMessage</div>
+            }
         </div>
     </div>
 </div>
 
 @code {
-    private Order order = new();
+    private Order order = new() { OrderDetails = new List<OrderDetail>() };
+    private OrderDetail newOrderDetail = new();
+    private List<Member> Members = new();
+    private List<Product> Products = new();
+    private string errorMessage = string.Empty;
+    private int Quantity
+    {
+        get => newOrderDetail.Quantity;
+        set
+        {
+            newOrderDetail.Quantity = value;
+            UpdateUnitPrice();
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Members = (await MemberService.GetMembers()).ToList();
+        Products = (await ProductService.GetAllProductsAsync()).ToList();
+    }
+
+    private void UpdateUnitPrice()
+    {
+        var selectedProduct = Products.FirstOrDefault(p => p.ProductId == newOrderDetail.ProductId);
+        if (selectedProduct != null)
+        {
+            newOrderDetail.UnitPrice = selectedProduct.UnitPrice * newOrderDetail.Quantity;
+        }
+    }
+
+
+    private void AddOrderDetail()
+    {
+        if (newOrderDetail.ProductId > 0 && newOrderDetail.Quantity > 0)
+        {
+            order.OrderDetails.Add(new OrderDetail
+                {
+                    ProductId = newOrderDetail.ProductId,
+                    Quantity = newOrderDetail.Quantity,
+                    UnitPrice = newOrderDetail.UnitPrice // Không cần nhân lại
+                });
+            newOrderDetail = new OrderDetail(); // Reset form
+        }
+    }
+
+
+    private void RemoveOrderDetail(OrderDetail item)
+    {
+        order.OrderDetails.Remove(item);
+    }
 
     private async Task HandleValidSubmit()
     {
-        await OrderService.CreateOrderAsync(order);
-        NavigationManager.NavigateTo("/orders");
+        // Kiểm tra xem Order có ít nhất một OrderDetail hay không
+        if (order.OrderDetails.Count == 0)
+        {
+            errorMessage = "Order must have at least one order detail.";
+            return;
+        }
+
+        // Cập nhật UnitPrice cho mỗi OrderDetail trong OrderDetails
+        foreach (var item in order.OrderDetails)
+        {
+            var selectedProduct = Products.FirstOrDefault(p => p.ProductId == item.ProductId);
+            if (selectedProduct != null)
+            {
+                // Cập nhật lại UnitPrice với giá trị mới (Price của sản phẩm * Quantity)
+                item.UnitPrice = selectedProduct.UnitPrice * item.Quantity;
+            }
+            else
+            {
+                item.UnitPrice = 0; // Nếu không có sản phẩm, gán UnitPrice = 0
+            }
+        }
+
+        try
+        {
+            // Gửi yêu cầu tạo đơn hàng mới
+            await OrderService.CreateOrderAsync(order);
+            NavigationManager.NavigateTo("/orders"); // Điều hướng đến trang danh sách đơn hàng
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error occurred: {ex.Message}";
+        }
     }
 
     private void Cancel()

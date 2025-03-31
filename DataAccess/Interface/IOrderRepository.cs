@@ -11,8 +11,10 @@ namespace DataAccess.Interface
     {
         Task<IEnumerable<Order>> GetAllAsync();
         Task<Order> GetByIdAsync(int orderId);
-        Task<bool> AddAsync(Order order);
-        Task<bool> UpdateAsync(Order order);
-        Task<bool> DeleteAsync(int orderId);
+        Task AddAsync(Order order);
+        Task UpdateAsync(Order order);
+        Task DeleteAsync(int orderId);
+
+        Task<IEnumerable<Order>> GetOrdersByMemberIdAsync(int memberId);
     }
 }
