@@ -8,48 +8,51 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using DataAccess.Implement;
 
 namespace Services.Implement
 {
-    // ProductService.cs
-    // ProductService.cs
     public class ProductService : IProductService
     {
-        private readonly IProductRepository _productRepository;
+        private readonly IProductRepository _repository;
 
-        public ProductService(IProductRepository productRepository)
+        public ProductService(IProductRepository repository)
         {
-            _productRepository = productRepository;
+            _repository = repository;
         }
 
         public async Task<IEnumerable<Product>> GetAllProductsAsync()
         {
-            return await _productRepository.GetAllAsync();
+            return await _repository.GetAllAsync();
         }
 
         public async Task<Product> GetProductByIdAsync(int id)
         {
-            return await _productRepository.GetByIdAsync(id);
+            return await _repository.GetByIdAsync(id);
         }
 
         public async Task<Product> CreateProductAsync(Product product)
         {
-            return await _productRepository.AddAsync(product);
+            return await _repository.AddAsync(product);
         }
 
-        public async Task UpdateProductAsync(Product product)
+        public async Task<Product> UpdateProductAsync(Product product)
         {
-            await _productRepository.UpdateAsync(product);
+            return await _repository.UpdateAsync(product);
         }
 
-        public async Task DeleteProductAsync(int id)
+        public async Task<bool> DeleteProductAsync(int id)
         {
-            await _productRepository.DeleteAsync(id);
+            return await _repository.DeleteAsync(id);
+        }
+        public async Task<bool> CheckProductInOrderDetailsAsync(int id)
+        {
+            return await _repository.IsProductInOrderDetailsAsync(id);
         }
 
-        public async Task<IEnumerable<Product>> SearchProductsAsync(string productName, decimal? unitPrice)
+        public async Task<IEnumerable<Product>> SearchProductsAsync(string name, decimal? unitPrice)
         {
-            return await _productRepository.SearchAsync(productName, unitPrice);
+            return await _repository.SearchAsync(name, unitPrice);
         }
     }
 }

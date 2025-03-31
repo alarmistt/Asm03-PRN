@@ -12,8 +12,9 @@ namespace DataAccess.Interface
         Task<IEnumerable<Product>> GetAllAsync();
         Task<Product> GetByIdAsync(int id);
         Task<Product> AddAsync(Product product);
-        Task UpdateAsync(Product product);
-        Task DeleteAsync(int id);
-        Task<IEnumerable<Product>> SearchAsync(string productName, decimal? unitPrice);
+        Task<Product> UpdateAsync(Product product);
+        Task<bool> DeleteAsync(int id);
+        Task<bool> IsProductInOrderDetailsAsync(int id);
+        Task<IEnumerable<Product>> SearchAsync(string name, decimal? unitPrice);
     }
 }

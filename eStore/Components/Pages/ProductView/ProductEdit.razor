@@ -1,0 +1,189 @@
+﻿
+@page "/product/edit/{ProductId:int?}"
+@using BusinessObject.Entities
+@using Services.Interface
+@inject IProductService ProductService
+@inject ICategoryService CategoryService
+@inject NavigationManager NavigationManager
+
+@rendermode InteractiveServer
+
+<div class="container mt-5">
+    <div class="card shadow-sm border-0 rounded" style="background-color: #f8f9fa;">
+        <div class="card-header text-white text-center py-3 rounded-top" style="background-color: #6c757d;">
+            <h3 class="mb-0">@(ProductId == null ? "Create Product" : "Edit Product")</h3>
+        </div>
+        <div class="card-body">
+            <EditForm Model="product" OnValidSubmit="HandleValidSubmit">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="mb-3">
+                    <label for="CategoryId" class="form-label fw-bold">Category</label>
+                    <InputSelect id="CategoryId" class="form-select" @bind-Value="product.CategoryId">
+                        <option value="">Select a category</option>
+                        @foreach (var category in categories)
+                        {
+                            <option value="@category.CategoryId">@category.CategoryName</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="@(() => product.CategoryId)" />
+                </div>
+
+                <div class="mb-3">
+                    <label for="ProductName" class="form-label fw-bold">Product Name</label>
+                    <InputText id="ProductName" class="form-control" @bind-Value="product.ProductName" />
+                    <ValidationMessage For="@(() => product.ProductName)" />
+                </div>
+
+                <div class="mb-3">
+                    <label for="Weight" class="form-label fw-bold">Weight</label>
+                    <InputText id="Weight" class="form-control" @bind-Value="product.Weight" />
+                    <ValidationMessage For="@(() => product.Weight)" />
+                </div>
+
+                <div class="mb-3">
+                    <label for="UnitPrice" class="form-label fw-bold">Unit Price</label>
+                    <InputNumber id="UnitPrice" class="form-control" @bind-Value="product.UnitPrice" min="1" step="0.01" />
+                    <ValidationMessage For="@(() => product.UnitPrice)" />
+                </div>
+
+                <div class="mb-3">
+                    <label for="UnitsInStock" class="form-label fw-bold">Units In Stock</label>
+                    <InputNumber id="UnitsInStock" class="form-control" @bind-Value="product.UnitsInStock" min="1" />
+                    <ValidationMessage For="@(() => product.UnitsInStock)" />
+                </div>
+
+                <div class="d-flex justify-content-end">
+                    <button type="submit" class="btn btn-success me-2">
+                        <i class="bi bi-save"></i> Save
+                    </button>
+                    <button type="button" class="btn btn-danger" @onclick="Cancel">
+                        <i class="bi bi-x-circle"></i> Cancel
+                    </button>
+                </div>
+            </EditForm>
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="alert alert-danger mt-3">@errorMessage</div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public int? ProductId { get; set; }
+
+    private Product product = new();
+    private List<Category> categories = new();
+    private string errorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            categories = (await CategoryService.GetCategories()).ToList();
+            if (ProductId.HasValue)
+            {
+                product = await ProductService.GetProductByIdAsync(ProductId.Value);
+                if (product == null)
+                {
+                    errorMessage = $"Product with ID {ProductId} not found.";
+                    NavigationManager.NavigateTo("/products");
+                    return;
+                }
+            }
+            else
+            {
+                product = new Product
+                    {
+                        ProductName = "",
+                        Weight = "",
+                        UnitPrice = 0,
+                        UnitsInStock = 0,
+                        CategoryId = 0
+                    };
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading data: {ex.Message}";
+            Console.WriteLine($"Error loading: {ex}");
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            Console.WriteLine($"Saving product: CategoryId={product.CategoryId}, " +
+                            $"Name={product.ProductName}, Weight={product.Weight}, " +
+                            $"UnitPrice={product.UnitPrice}, UnitsInStock={product.UnitsInStock}");
+
+            // Validate Category
+            if (product.CategoryId <= 0)
+            {
+                errorMessage = "Please select a valid category.";
+                return;
+            }
+
+            // Validate ProductName
+            if (string.IsNullOrEmpty(product.ProductName))
+            {
+                errorMessage = "Product Name cannot be empty.";
+                return;
+            }
+            if (product.ProductName.All(char.IsDigit))
+            {
+                errorMessage = "Product Name cannot contain only numbers.";
+                return;
+            }
+
+            // Validate Weight
+            if (string.IsNullOrEmpty(product.Weight))
+            {
+                errorMessage = "Weight cannot be empty.";
+                return;
+            }
+
+            // Validate UnitPrice
+            if (product.UnitPrice < 1)
+            {
+                errorMessage = "Unit Price must be 1 or greater.";
+                return;
+            }
+
+            // Validate UnitsInStock
+            if (product.UnitsInStock < 1)
+            {
+                errorMessage = "Units In Stock must be 1 or greater.";
+                return;
+            }
+
+            if (ProductId.HasValue)
+            {
+                await ProductService.UpdateProductAsync(product);
+            }
+            else
+            {
+                await ProductService.CreateProductAsync(product);
+            }
+            NavigationManager.NavigateTo("/products");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error saving product: {ex.Message}";
+            if (ex.InnerException != null)
+            {
+                errorMessage += $" Inner exception: {ex.InnerException.Message}";
+            }
+            Console.WriteLine(errorMessage);
+        }
+    }
+
+    private void Cancel()
+    {
+        NavigationManager.NavigateTo("/products");
+    }
+}
