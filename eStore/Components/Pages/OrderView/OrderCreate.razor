@@ -22,8 +22,14 @@
                 <ValidationSummary />
 
                 <div class="mb-3">
-                    <label for="memberId" class="form-label">Member ID</label>
-                    <InputNumber id="memberId" class="form-control" @bind-Value="order.MemberId" />
+                    <label for="memberId" class="form-label">Member</label>
+                    <InputSelect id="memberId" class="form-control" @bind-Value="order.MemberId">
+                        <option value="">-- Select Member --</option>
+                        @foreach (var member in Members)
+                        {
+                            <option value="@member.MemberId">@member.CompanyName</option>
+                        }
+                    </InputSelect>
                 </div>
 
 

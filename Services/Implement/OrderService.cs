@@ -1,4 +1,5 @@
 ﻿using BusinessObject.Entities;
+using DataAccess.Implement;
 using DataAccess.Interface;
 using Services.Interface;
 using System;
@@ -12,10 +13,12 @@ namespace Services.Implement
     public class OrderService : IOrderService
     {
         private readonly IOrderRepository _orderRepository;
+        private readonly IOrderDetailRepository _orderDetailRepository;
 
-        public OrderService(IOrderRepository orderRepository)
+        public OrderService(IOrderRepository orderRepository, IOrderDetailRepository orderDetailRepository)
         {
             _orderRepository = orderRepository;
+            _orderDetailRepository = orderDetailRepository;
         }
 
         public async Task<IEnumerable<Order>> GetAllOrdersAsync()
@@ -28,7 +31,7 @@ namespace Services.Implement
             return await _orderRepository.GetByIdAsync(orderId);
         }
 
-        public async Task<bool> CreateOrderAsync(Order order)
+        public async Task<IEnumerable<Order>> GetOrdersByMemberIdAsync(int memberId)
         {
             return await _orderRepository.GetOrdersByMemberIdAsync(memberId);
         }
@@ -145,9 +148,13 @@ namespace Services.Implement
             }
         }
 
-        public async Task<bool> DeleteOrderAsync(int orderId)
+        public async Task DeleteOrderAsync(int orderId)
         {
-            return await _orderRepository.DeleteAsync(orderId);
+            // Xóa tất cả OrderDetail trước để tránh lỗi ràng buộc khóa ngoại
+            await _orderDetailRepository.DeleteByOrderIdAsync(orderId);
+
+            // Xóa đơn hàng
+            await _orderRepository.DeleteAsync(orderId);
         }
     }
 }
