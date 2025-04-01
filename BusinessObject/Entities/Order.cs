@@ -23,6 +23,10 @@ namespace  BusinessObject.Entities
         public decimal Freight { get; set; }
 
         public Member Member { get; set; }
+
+        [Required]
+        [RegularExpression("^(Pending|Processing|Complete|Cancelled)$", ErrorMessage = "Status must be Pending, Processing, Complete, or Cancelled")]
+        public string Status { get; set; } = "Pending";
         public ICollection<OrderDetail> OrderDetails { get; set; }
     }
 
