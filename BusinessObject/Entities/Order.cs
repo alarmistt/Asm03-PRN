@@ -41,7 +41,7 @@ namespace  BusinessObject.Entities
             {
                 foreach (var detail in OrderDetails)
                 {
-                    total += detail.UnitPrice * detail.Quantity * (1 - (decimal)detail.Discount);
+                    total += detail.UnitPrice *  (1 - (decimal)detail.Discount);
                 }
             }
 
