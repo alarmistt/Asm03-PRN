@@ -1,13 +1,15 @@
-using Blazored.SessionStorage;
+﻿using Blazored.SessionStorage;
 using DataAccess.Implement;
 using DataAccess.Interface;
 using eStore.Components;
 using eStore.DI;
 using Services.Implement;
 using Services.Interface;
-
+using OfficeOpenXml;
 
 var builder = WebApplication.CreateBuilder(args);
+
+ExcelPackage.License.SetNonCommercialPersonal("ASM03");
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
