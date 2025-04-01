@@ -10,6 +10,6 @@ namespace Services.Interface
 {
     public interface IVnPayService
     {
-        string CreatePaymentUrl(HttpContext httpContext, int appointmentId, decimal total);
+        string CreatePaymentUrl(HttpContext httpContext, int orderId, decimal total);
     }
 }
