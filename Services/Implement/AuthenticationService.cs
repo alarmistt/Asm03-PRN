@@ -36,6 +36,7 @@ namespace Services.Implement
             }
             string token = GenerateJwtToken(account);
             await _authStateProvider.SetTokenAsync(token);
+            Console.WriteLine(_authStateProvider.GetIdRoleAsync().ToString());
             return true;
         }
 

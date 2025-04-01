@@ -1,30 +1,23 @@
 ﻿using Blazored.SessionStorage;
+using BusinessObject.Entities;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using System.Threading.Tasks;
 
 public class JwtAuthenticationStateProvider : AuthenticationStateProvider
 {
     private readonly ISessionStorageService _sessionStorage;
-    private bool _isPrerendering = true;
     private readonly IConfiguration _configuration;
+    private bool _isPrerendering = true;
 
     public JwtAuthenticationStateProvider(ISessionStorageService sessionStorage, IConfiguration configuration)
     {
         _sessionStorage = sessionStorage;
         _configuration = configuration;
     }
-
-    public void MarkAsRendered()
-    {
-        _isPrerendering = false; 
-        NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
-    }
-
 
     public async Task LogoutAsync()
     {
@@ -38,12 +31,22 @@ public class JwtAuthenticationStateProvider : AuthenticationStateProvider
         await _sessionStorage.SetItemAsync("authToken", token);
         NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
     }
+    public async Task<int?> GetIdRoleAsync()
+    {
+        var token = await _sessionStorage.GetItemAsync<string>("authToken");
+        if (string.IsNullOrEmpty(token))
+            return null;
 
+        var handler = new JwtSecurityTokenHandler();
+        var jwtToken = handler.ReadJwtToken(token);
+        var roleClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == "id");
+        return int.Parse(roleClaim?.Value!);
+    }
     public override async Task<AuthenticationState> GetAuthenticationStateAsync()
     {
         if (_isPrerendering)
         {
-            Console.WriteLine("Returning unauthenticated state due to prerendering");
+            Console.WriteLine("Session storage is not available during prerendering");
             return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
         }
 
@@ -71,7 +74,7 @@ public class JwtAuthenticationStateProvider : AuthenticationStateProvider
                 ClockSkew = TimeSpan.Zero
             };
             ClaimsPrincipal principal = handler.ValidateToken(token, validationParameters, out SecurityToken validatedToken);
-            JwtSecurityToken jwtToken = validatedToken as JwtSecurityToken;
+            JwtSecurityToken? jwtToken = validatedToken as JwtSecurityToken;
 
             if (jwtToken == null)
             {
@@ -92,5 +95,10 @@ public class JwtAuthenticationStateProvider : AuthenticationStateProvider
             await LogoutAsync();
             return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
         }
+    }
+
+    public void SetPrerendering(bool isPrerendering)
+    {
+        _isPrerendering = isPrerendering;
     }
 }
