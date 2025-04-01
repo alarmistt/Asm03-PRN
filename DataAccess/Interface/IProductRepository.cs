@@ -16,5 +16,7 @@ namespace DataAccess.Interface
         Task<bool> DeleteAsync(int id);
         Task<bool> IsProductInOrderDetailsAsync(int id);
         Task<IEnumerable<Product>> SearchAsync(string name, decimal? unitPrice);
+
+        Task<bool> ExistProductByCategoryId(int categoryId);
     }
 }

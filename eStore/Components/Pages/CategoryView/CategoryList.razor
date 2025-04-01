@@ -3,53 +3,64 @@
 @using Services.Interface
 @inject ICategoryService CategoryService
 @inject NavigationManager NavigationManager
-
 @rendermode InteractiveServer
 
-<div class="container mt-5">
-    <div class="card shadow-sm border-0 rounded bg-light">
-        <div class="card-header bg-warning-subtle text-dark text-center py-3 rounded-top">
-            <h3 class="mb-0">Categories</h3>
+<div class="container my-5">
+    <div class="card shadow-lg border-0 rounded-3" style="background-color: #ffffff; max-width: 1000px; margin: 0 auto;">
+        <div class="card-header text-white text-center py-4 rounded-top-3" style="background: linear-gradient(135deg, #4a90e2, #50b5e9);">
+            <h3 class="mb-0 fw-light">Categories Management</h3>
         </div>
-        <div class="card-body">
-            <div class="d-flex justify-content-between mb-3">
-                <h5 class="text-secondary">Manage your categories efficiently</h5>
-                <button class="btn btn-outline-success px-4 fw-bold" @onclick="() => CreateCategory()">
-                    <i class="bi bi-plus-lg"></i> Add Category
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="text-muted fw-normal">Manage your categories efficiently</h5>
+                <button class="btn btn-primary fw-semibold rounded-3 px-4" @onclick="CreateCategory">
+                    <i class="bi bi-plus-lg me-2"></i> Add Category
                 </button>
+            </div>
+
+            <div class="row g-3 mb-4">
+                <div class="col-md-9">
+                    <input type="text" class="form-control rounded-3" placeholder="Search category by name..."
+                           @bind="searchTerm" @oninput="async () => await SearchCategories()" />
+                </div>
+                <div class="col-md-3">
+                    <button class="btn btn-outline-primary w-100 rounded-3" @onclick="SearchCategories">
+                        <i class="bi bi-search me-2"></i> Search
+                    </button>
+                </div>
             </div>
 
             @if (categories == null || !categories.Any())
             {
                 <div class="text-center py-5">
-                    <p class="text-muted">No categories available. Start by adding a new one.</p>
+                    <p class="text-muted fst-italic">No categories available. Start by adding a new one.</p>
                 </div>
             }
             else
             {
                 <div class="table-responsive">
-                    <table class="table table-bordered table-hover align-middle text-center bg-white shadow-sm">
-                        <thead class="bg-secondary text-white">
+                    <table class="table table-hover align-middle text-center rounded-3 overflow-hidden">
+                        <thead style="background: #4a90e2; color: white;">
                             <tr>
-                                <th>Category ID</th>
-                                <th>Category Name</th>
-                                <th>Description</th>
-                                <th>Actions</th>
+                                <th scope="col">Category ID</th>
+                                <th scope="col">Category Name</th>
+                                <th scope="col">Description</th>
+                                <th scope="col">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach (var category in categories)
                             {
                                 <tr class="table-row">
-                                    <td class="fw-bold">@category.CategoryId</td>
+                                    <td class="fw-semibold">@category.CategoryId</td>
                                     <td>@category.CategoryName</td>
                                     <td>@category.Description</td>
                                     <td>
-                                        <button class="btn btn-outline-warning btn-sm mx-1" @onclick="() => EditCategory(category.CategoryId)">
-                                            <i class="bi bi-pencil-square"></i> Edit
+                                        <button class="btn btn-outline-warning btn-sm mx-1 rounded-3" @onclick="() => EditCategory(category.CategoryId)">
+                                            <i class="bi bi-pencil me-1"></i> Edit
                                         </button>
-                                        <button class="btn btn-outline-danger btn-sm mx-1" @onclick="() => DeleteCategory(category.CategoryId)">
-                                            <i class="bi bi-trash"></i> Delete
+                                        <button class="btn btn-outline-danger btn-sm mx-1 rounded-3" @onclick="() => DeleteCategory(category.CategoryId)">
+                                            <i class="bi bi-trash me-1"></i> Delete
                                         </button>
                                     </td>
                                 </tr>
@@ -63,14 +74,29 @@
 </div>
 
 <style>
+    body {
+        background-color: #f4f7fa;
+    }
+
     .table-row:hover {
-        background-color: rgba(13, 110, 253, 0.1); /* Màu xanh nhạt khi hover */
+        background-color: rgba(74, 144, 226, 0.1);
         transition: background-color 0.3s ease;
     }
+
+    .btn-primary {
+        background-color: #4a90e2;
+        border-color: #4a90e2;
+    }
+
+        .btn-primary:hover {
+            background-color: #357abd;
+            border-color: #357abd;
+        }
 </style>
 
 @code {
     private List<Category> categories = new();
+    private string searchTerm = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -81,8 +107,8 @@
     {
         try
         {
-            categories = (await CategoryService.GetCategories()).ToList();
-            StateHasChanged(); // Cập nhật UI
+            categories = (await CategoryService.GetCategories(searchTerm)).ToList();
+            StateHasChanged();
         }
         catch (Exception ex)
         {
@@ -90,10 +116,14 @@
         }
     }
 
+    private async Task SearchCategories()
+    {
+        await LoadCategories();
+    }
+
     private void CreateCategory()
     {
         Console.WriteLine("✅ Button Clicked! Navigating to /category/edit");
-        StateHasChanged();
         NavigationManager.NavigateTo("/category/edit");
     }
 
@@ -109,7 +139,7 @@
         {
             Console.WriteLine($"Deleting category: {categoryId}");
             await CategoryService.DeleteCategory(categoryId);
-            await LoadCategories(); // Cập nhật danh sách sau khi xóa
+            await LoadCategories();
         }
         catch (Exception ex)
         {

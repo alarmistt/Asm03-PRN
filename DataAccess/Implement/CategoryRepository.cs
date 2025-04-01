@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace DataAccess.Implement
 {
@@ -45,6 +46,16 @@ namespace DataAccess.Implement
             {
                 return false;
             }
+        }
+
+        public async Task<IEnumerable<Category>> GetCategories(string name = "")
+        {
+            var query = _context.Categories.AsQueryable();
+            if (!string.IsNullOrWhiteSpace(name))
+            {
+                query = query.Where(x => x.CategoryName.ToLower().Contains(name.ToLower()));
+            }
+            return await query.ToListAsync();
         }
 
         public async Task<IEnumerable<Category>> GetCategories()

@@ -7,70 +7,70 @@
 
 @rendermode InteractiveServer
 
-<div class="container mt-5">
-    <div class="card shadow-sm border-0 rounded" style="background-color: #f8f9fa;">
-        <div class="card-header text-white text-center py-3 rounded-top" style="background-color: #6c757d;">
-            <h3 class="mb-0">@(MemberId == null ? "Create Member" : "Edit Member")</h3>
+<div class="container my-5">
+    <div class="card shadow-lg border-0 rounded-3" style="background-color: #ffffff; max-width: 700px; margin: 0 auto;">
+        <div class="card-header text-white text-center py-4 rounded-top-3" style="background: linear-gradient(135deg, #4a90e2, #50b5e9);">
+            <h3 class="mb-0 fw-light">@(MemberId == null ? "Add New Member" : "Edit Member Details")</h3>
         </div>
-        <div class="card-body">
+        <div class="card-body p-4">
             <EditForm Model="member" OnValidSubmit="HandleValidSubmit">
                 <DataAnnotationsValidator />
-                <ValidationSummary />
+                <ValidationSummary class="text-danger mb-3" />
 
-                <div class="mb-3">
-                    <label for="Email" class="form-label fw-bold">Email</label>
-                    <InputText id="Email" class="form-control" @bind-Value="member.Email" />
-                </div>
-                <div class="mb-3">
-                    <label for="CompanyName" class="form-label fw-bold">Company Name</label>
-                    <InputText id="CompanyName" class="form-control" @bind-Value="member.CompanyName" />
-                </div>
-
-                <!-- Dropdown chọn quốc gia -->
-                <div class="mb-3">
-                    <label for="Country" class="form-label fw-bold">Country</label>
-                    <select id="Country" class="form-select" @onchange="OnCountryChanged">
-                        <option value="">Select a country</option>
-                        @foreach (var country in countries)
-                        {
-                            <option value="@country.Name.Common" selected="@(member.Country == country.Name.Common)">@country.Name.Common</option>
-                        }
-                    </select>
-                </div>
-
-                <!-- Dropdown chọn tỉnh/thành phố -->
-                <div class="mb-3">
-                    <label for="City" class="form-label fw-bold">Province/City</label>
-                    <select id="City" class="form-select" @bind="member.City">
-                        <option value="">Select a province/city</option>
-                        @foreach (var city in cities)
-                        {
-                            <option value="@city">@city</option>
-                        }
-                    </select>
-                </div>
-
-                <div class="mb-3">
-                    <label for="Password" class="form-label fw-bold">Password</label>
-                    <InputText id="Password" class="form-control" type="password" @bind-Value="member.Password" />
+                <div class="row g-3">
+                    <div class="col-md-6 mb-3">
+                        <label for="Email" class="form-label fw-semibold text-muted">Email Address</label>
+                        <InputText id="Email" class="form-control rounded-3" @bind-Value="member.Email" placeholder="Enter email" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="CompanyName" class="form-label fw-semibold text-muted">Company Name</label>
+                        <InputText id="CompanyName" class="form-control rounded-3" @bind-Value="member.CompanyName" placeholder="Enter company name" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="Country" class="form-label fw-semibold text-muted">Country</label>
+                        <select id="Country" class="form-select rounded-3" @onchange="OnCountryChanged">
+                            <option value="">-- Select a country --</option>
+                            @foreach (var country in countries)
+                            {
+                                <option value="@country.Name.Common" selected="@(member.Country == country.Name.Common)">@country.Name.Common</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="City" class="form-label fw-semibold text-muted">Province/City</label>
+                        <select id="City" class="form-select rounded-3" @bind="member.City">
+                            <option value="">-- Select a province/city --</option>
+                            @foreach (var city in cities)
+                            {
+                                <option value="@city">@city</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-12 mb-3">
+                        <label for="Password" class="form-label fw-semibold text-muted">Password</label>
+                        <InputText id="Password" class="form-control rounded-3" type="password" @bind-Value="member.Password" placeholder="Enter password" />
+                    </div>
                 </div>
 
-                <div class="d-flex justify-content-end">
-                    <button type="submit" class="btn btn-success me-2">
-                        <i class="bi bi-save"></i> Save
-                    </button>
-                    <button type="button" class="btn btn-danger" @onclick="Cancel">
+                <div class="d-flex justify-content-end mt-4">
+                    <button type="button" class="btn btn-outline-secondary me-2 rounded-3 px-4" @onclick="Cancel">
                         <i class="bi bi-x-circle"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary rounded-3 px-4" style="background: #4a90e2; border: none;">
+                        <i class="bi bi-save"></i> Save
                     </button>
                 </div>
             </EditForm>
             @if (!string.IsNullOrEmpty(errorMessage))
             {
-                <div class="alert alert-danger mt-3">@errorMessage</div>
+                <div class="alert alert-warning mt-4 rounded-3" role="alert">
+                    <i class="bi bi-exclamation-triangle me-2"></i> @errorMessage
+                </div>
             }
         </div>
     </div>
 </div>
+
 
 @code {
     [Parameter]

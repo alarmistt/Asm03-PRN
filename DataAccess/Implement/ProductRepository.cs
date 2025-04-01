@@ -112,5 +112,11 @@ namespace DataAccess.Implement
 
             return await query.ToListAsync();
         }
+
+        public Task<bool> ExistProductByCategoryId(int categoryId)
+        {
+            bool isExist = _context.Products.Any(p => p.CategoryId == categoryId);
+            return Task.FromResult(isExist);
+        }
     }
 }

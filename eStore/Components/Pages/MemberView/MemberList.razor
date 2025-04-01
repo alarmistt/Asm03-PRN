@@ -6,54 +6,71 @@
 
 @rendermode InteractiveServer
 
-<div class="container mt-5">
-    <div class="card shadow-sm border-0 rounded bg-light">
-        <div class="card-header text-white text-center py-3 rounded-top" style="background-color: #b3541e;">
-            <h3 class="mb-0">Members</h3>
+<div class="container my-5">
+    <div class="card shadow-lg border-0 rounded-3" style="background-color: #ffffff; max-width: 1200px; margin: 0 auto;">
+        <div class="card-header text-white text-center py-4 rounded-top-3" style="background: linear-gradient(135deg, #4a90e2, #50b5e9);">
+            <h3 class="mb-0 fw-light">Members Management</h3>
         </div>
-        <div class="card-body">
-            <div class="d-flex justify-content-between mb-3">
-                <h5 class="text-secondary">Manage your members efficiently</h5>
-                <button class="btn btn-outline-success px-4 fw-bold" @onclick="() => CreateMember()">
-                    <i class="bi bi-plus-lg"></i> Add Member
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="text-muted fw-normal">Easily manage your members</h5>
+                <button class="btn btn-primary fw-semibold rounded-3 px-4" @onclick="CreateMember">
+                    <i class="bi bi-person-plus-fill me-2"></i> Add Member
                 </button>
+            </div>
+
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <input type="text" class="form-control rounded-3" placeholder="Search by Email" @bind="searchEmail" @oninput="async () => await SearchMember()" />
+                </div>
+                <div class="col-md-3">
+                    <input type="text" class="form-control rounded-3" placeholder="Search by Company" @bind="searchCompany" @oninput="async () => await SearchMember()" />
+                </div>
+                <div class="col-md-3">
+                    <input type="text" class="form-control rounded-3" placeholder="Search by City" @bind="searchCity" @oninput="async () => await SearchMember()" />
+                </div>
+                <div class="col-md-3">
+                    <button class="btn btn-outline-primary w-100 rounded-3" @onclick="SearchMember">
+                        <i class="bi bi-search me-2"></i> Search
+                    </button>
+                </div>
             </div>
 
             @if (members == null || !members.Any())
             {
                 <div class="text-center py-5">
-                    <p class="text-muted">No members available. Start by adding a new one.</p>
+                    <p class="text-muted fst-italic">No members found. Try adjusting your search or add a new member.</p>
                 </div>
             }
             else
             {
                 <div class="table-responsive">
-                    <table class="table table-bordered table-hover align-middle text-center bg-white shadow-sm">
-                        <thead style="background-color: #8a3c13; color: white;">
+                    <table class="table table-hover align-middle text-center rounded-3 overflow-hidden">
+                        <thead style="background: #4a90e2; color: white;">
                             <tr>
-                                <th>Member ID</th>
-                                <th>Email</th>
-                                <th>Company Name</th>
-                                <th>City</th>
-                                <th>Country</th>
-                                <th>Actions</th>
+                                <th scope="col">ID</th>
+                                <th scope="col">Email</th>
+                                <th scope="col">Company</th>
+                                <th scope="col">City</th>
+                                <th scope="col">Country</th>
+                                <th scope="col">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach (var member in members)
                             {
                                 <tr class="table-row">
-                                    <td class="fw-bold">@member.MemberId</td>
+                                    <td class="fw-semibold">@member.MemberId</td>
                                     <td>@member.Email</td>
                                     <td>@member.CompanyName</td>
                                     <td>@member.City</td>
                                     <td>@member.Country</td>
                                     <td>
-                                        <button class="btn btn-outline-warning btn-sm mx-1" @onclick="() => EditMember(member.MemberId)">
-                                            <i class="bi bi-pencil-square"></i> Edit
+                                        <button class="btn btn-outline-warning btn-sm mx-1 rounded-3" @onclick="() => EditMember(member.MemberId)">
+                                            <i class="bi bi-pencil me-1"></i> Edit
                                         </button>
-                                        <button class="btn btn-outline-danger btn-sm mx-1" @onclick="() => DeleteMember(member.MemberId)">
-                                            <i class="bi bi-trash"></i> Delete
+                                        <button class="btn btn-outline-danger btn-sm mx-1 rounded-3" @onclick="() => DeleteMember(member.MemberId)">
+                                            <i class="bi bi-trash me-1"></i> Delete
                                         </button>
                                     </td>
                                 </tr>
@@ -67,14 +84,35 @@
 </div>
 
 <style>
+    body {
+        background-color: #f4f7fa;
+    }
+
     .table-row:hover {
-        background-color: rgba(138, 60, 19, 0.2); /* Màu cam tối nhạt khi hover */
+        background-color: rgba(74, 144, 226, 0.1);
         transition: background-color 0.3s ease;
+    }
+
+    .btn-primary {
+        background-color: #4a90e2;
+        border-color: #4a90e2;
+    }
+
+        .btn-primary:hover {
+            background-color: #357abd;
+            border-color: #357abd;
+        }
+
+    .table th {
+        background-color: #4a90e2 !important;
     }
 </style>
 
 @code {
     private List<Member> members = new();
+    private string searchEmail = string.Empty;
+    private string searchCompany = string.Empty;
+    private string searchCity = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -85,13 +123,18 @@
     {
         try
         {
-            members = (await MemberService.GetMembers()).ToList();
+            members = (await MemberService.GetMembers(searchEmail, searchCompany, searchCity)).ToList();
             StateHasChanged();
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error fetching members: {ex.Message}");
         }
+    }
+
+    private async Task SearchMember()
+    {
+        await LoadMembers();
     }
 
     private void CreateMember()

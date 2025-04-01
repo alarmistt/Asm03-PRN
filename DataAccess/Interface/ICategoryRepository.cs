@@ -13,6 +13,7 @@ namespace DataAccess.Interface
         Task<bool> UpdateCategory(Category category);
         Task<bool> DeleteCategory(int categoryId);
         Task<Category> GetCategory(int categoryId);
+        Task<IEnumerable<Category>> GetCategories(string name = "");
         Task<IEnumerable<Category>> GetCategories();
     }
 }
