@@ -1,6 +1,8 @@
 ﻿using BusinessObject.Entities;
 using Core;
+using DataAccess.Implement;
 using DataAccess.Interface;
+using Microsoft.AspNetCore.SignalR;
 using Services.Interface;
 
 namespace Services.Implement
@@ -9,14 +11,19 @@ namespace Services.Implement
     {
         private readonly IMemberRepository _memberRepository;
 
-        public MemberService(IMemberRepository memberRepository)
+        private readonly IHubContext<ChatHub> _hubContext;
+
+        public MemberService(IMemberRepository memberRepository, IHubContext<ChatHub> hubContext)
         {
             _memberRepository = memberRepository;
+            _hubContext = hubContext;
         }
 
         public async Task<bool> AddMember(Member member)
         {
-            return await _memberRepository.AddMember(member);
+            bool isSuccess = await _memberRepository.AddMember(member);
+            await _hubContext.Clients.All.SendAsync("ReceiveMessage");
+            return isSuccess;
         }
 
         public async Task<bool> UpdateMember(Member member)
