@@ -8,6 +8,7 @@ namespace BusinessObject.Entities
         [Key]
         public int ProductId { get; set; }
 
+        
         [ForeignKey("Category")]
         public int CategoryId { get; set; }
 

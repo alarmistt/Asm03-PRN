@@ -3,7 +3,7 @@ namespace DataAccess.Interface
 {
     public interface IMemeberRepository
     {
-        Task<bool> AddMemberAsync(Member member);
+        Task<bool> AddMember(Member member);
         Task<bool> UpdateMember(Member member);
         Task<bool> DeleteMember(int memberId);
         Task<Member> GetMember(int memberId);

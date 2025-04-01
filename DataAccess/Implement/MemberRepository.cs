@@ -14,9 +14,9 @@ namespace DataAccess.Implement
             _context = context;
         }
 
-        public async Task<bool> AddMemberAsync(Member member)
+        public async Task<bool> AddMember(Member member)
         {
-            var exist = await _context.Member.FindAsync(member.Email);
+            var exist = await _context.Member.FirstOrDefaultAsync(m => m.Email == member.Email);
 
             if (exist != null)
             {
@@ -27,19 +27,40 @@ namespace DataAccess.Implement
             return true;
         }
 
-        public Task<bool> DeleteMember(int memberId)
+        public async Task<bool> DeleteMember(int memberId)
         {
-            throw new NotImplementedException();
+            var exist = await _context.Member.FindAsync(memberId);
+            if (exist != null)
+            {
+                _context.Member.Remove(exist);
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+
         }
 
-        public Task<Member> GetMember(int memberId)
+        public async Task<Member> GetMember(int memberId)
         {
-            throw new NotImplementedException();
+            var member = await _context.Member.FindAsync(memberId);
+
+            if (member != null)
+            {
+                return member;
+            }
+            else
+            {
+                return null;
+            }
         }
 
-        public Task<IEnumerable<Member>> GetMembers()
+        public async Task<IEnumerable<Member>> GetMembers()
         {
-            throw new NotImplementedException();
+            var members = await _context.Member.ToListAsync();
+            return members;
         }
 
         public async Task<Member> GetMembersByEmailAddress(string emailAddress)
@@ -61,9 +82,21 @@ namespace DataAccess.Implement
             return await _context.Member.FirstOrDefaultAsync(x => x.Email == email && x.Password == password);
         }
 
-        public Task<bool> UpdateMember(Member member)
+        public async Task<bool> UpdateMember(Member member)
         {
-            throw new NotImplementedException();
+            var exist = _context.Member.FindAsync(member.MemberId);
+
+            if (exist != null)
+            {
+                _context.Member.Update(member);
+                _context.SaveChangesAsync();
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+
         }
     }
 }

@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace _4.BusinessObject.Migrations
 {
     [DbContext(typeof(EStoreContext))]
-    [Migration("20250330101928_updateOrder")]
+    [Migration("20250401062258_updateOrder")]
     partial class updateOrder
     {
         /// <inheritdoc />
@@ -57,18 +57,15 @@ namespace _4.BusinessObject.Migrations
 
                     b.Property<string>("City")
                         .IsRequired()
-                        .HasMaxLength(15)
-                        .HasColumnType("nvarchar(15)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("CompanyName")
                         .IsRequired()
-                        .HasMaxLength(40)
-                        .HasColumnType("nvarchar(40)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Country")
                         .IsRequired()
-                        .HasMaxLength(15)
-                        .HasColumnType("nvarchar(15)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Email")
                         .IsRequired()

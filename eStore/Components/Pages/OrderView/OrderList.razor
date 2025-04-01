@@ -1,0 +1,125 @@
+﻿@page "/orders"
+@using BusinessObject.Entities
+@using Services.Interface
+@inject IOrderService OrderService
+@inject NavigationManager NavigationManager
+<PageTitle>Order</PageTitle>
+@rendermode InteractiveServer
+
+<div class="container mt-5">
+    <div class="card shadow-sm border-0 rounded bg-light">
+        <div class="card-header bg-warning-subtle text-dark text-center py-3 rounded-top">
+            <h3 class="mb-0">Orders</h3>
+        </div>
+        <div class="card-body">
+            <div class="d-flex justify-content-between mb-3">
+                <h5 class="text-secondary">Manage your orders efficiently</h5>
+                <button class="btn btn-outline-success px-4 fw-bold" @onclick="() => CreateOrder()">
+                    <i class="bi bi-plus-lg"></i> Add Order
+                </button>
+            </div>
+
+            @if (orders == null || !orders.Any())
+            {
+                <div class="text-center py-5">
+                    <p class="text-muted">No orders available. Start by adding a new one.</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover align-middle text-center bg-white shadow-sm">
+                        <thead class="bg-secondary text-white">
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Member ID</th>
+                                <th>Order Date</th>
+                                <th>Required Date</th>
+                                <th>Shipped Date</th>
+                                <th>Freight</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var order in orders)
+                            {
+                                <tr class="table-row">
+                                    <td class="fw-bold">@order.OrderId</td>
+                                    <td>@order.MemberId</td>
+                                    <td>@order.OrderDate.ToShortDateString()</td>
+                                    <td>@order.RequiredDate.ToShortDateString()</td>
+                                    <td>@(order.ShippedDate?.ToShortDateString() ?? "N/A")</td>
+                                    <td>@order.Freight</td>
+                                    <td>
+                                        <button class="btn btn-outline-warning btn-sm mx-1" @onclick="() => EditOrder(order.OrderId)">
+                                            <i class="bi bi-pencil-square"></i> Edit
+                                        </button>
+                                        <button class="btn btn-outline-danger btn-sm mx-1" @onclick="() => DeleteOrder(order.OrderId)">
+                                            <i class="bi bi-trash"></i> Delete
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<style>
+    .table-row:hover {
+        background-color: rgba(13, 110, 253, 0.1); /* Màu xanh nhạt khi hover */
+        transition: background-color 0.3s ease;
+    }
+</style>
+
+@code {
+    private List<Order> orders = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadOrders();
+    }
+
+    private async Task LoadOrders()
+    {
+        try
+        {
+            orders = (await OrderService.GetAllOrdersAsync()).ToList();
+            StateHasChanged(); // Cập nhật UI
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching orders: {ex.Message}");
+        }
+    }
+
+    private void CreateOrder()
+    {
+        Console.WriteLine("✅ Button Clicked! Navigating to /order/create");
+        StateHasChanged();
+        NavigationManager.NavigateTo("/order/create");
+    }
+
+    private void EditOrder(int orderId)
+    {
+        Console.WriteLine($"Navigating to /order/edit/{orderId}");
+        NavigationManager.NavigateTo($"/order/edit/{orderId}");
+    }
+
+    private async Task DeleteOrder(int orderId)
+    {
+        try
+        {
+            Console.WriteLine($"Deleting order: {orderId}");
+            await OrderService.DeleteOrderAsync(orderId);
+            await LoadOrders(); // Cập nhật danh sách sau khi xóa
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error deleting order: {ex.Message}");
+        }
+    }
+}

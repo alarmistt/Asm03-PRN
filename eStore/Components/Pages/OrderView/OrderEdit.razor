@@ -1,0 +1,62 @@
+﻿@page "/order/edit/{OrderId:int}"
+@using BusinessObject.Entities
+@using Services.Interface
+@inject IOrderService OrderService
+@inject NavigationManager Navigation
+<PageTitle>Edit Order</PageTitle>
+<h3>Edit Order</h3>
+
+@if (order == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <form @onsubmit="SaveOrder">
+        <label>Member ID:</label>
+        <input type="number" @bind="order.MemberId" />
+        <br />
+        <label>Order Date:</label>
+        <input type="date" @bind="order.OrderDate" />
+        <br />
+        <label>Required Date:</label>
+        <input type="date" @bind="order.RequiredDate" />
+        <br />
+        <label>Shipped Date:</label>
+        <input type="date" @bind="order.ShippedDate" />
+        <br />
+        <label>Freight:</label>
+        <input type="number" step="0.01" @bind="order.Freight" />
+        <br />
+        <button type="submit">Save</button>
+        <button @onclick="Cancel">Cancel</button>
+    </form>
+}
+
+@code {
+    [Parameter] public int OrderId { get; set; }
+    private Order order;
+
+    protected override async Task OnInitializedAsync()
+    {
+        order = await OrderService.GetOrderByIdAsync(OrderId) ?? new Order();
+    }
+
+    private async Task SaveOrder()
+    {
+        if (order.OrderId == 0)
+        {
+            await OrderService.CreateOrderAsync(order);
+        }
+        else
+        {
+            await OrderService.UpdateOrderAsync(order);
+        }
+        Navigation.NavigateTo("/orders");
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo("/orders");
+    }
+}
