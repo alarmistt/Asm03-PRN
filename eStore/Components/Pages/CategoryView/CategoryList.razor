@@ -3,7 +3,6 @@
 @using Services.Interface
 @inject ICategoryService CategoryService
 @inject NavigationManager NavigationManager
-
 @rendermode InteractiveServer
 
 <div class="container mt-5">
@@ -17,6 +16,12 @@
                 <button class="btn btn-outline-success px-4 fw-bold" @onclick="() => CreateCategory()">
                     <i class="bi bi-plus-lg"></i> Add Category
                 </button>
+            </div>
+
+            <div class="mb-3 d-flex">
+                <input type="text" class="form-control me-2" placeholder="Search category by name..."
+                       @bind="searchTerm" />
+                <button class="btn btn-outline-primary" @onclick="SearchCategories">Search</button>
             </div>
 
             @if (categories == null || !categories.Any())
@@ -64,13 +69,14 @@
 
 <style>
     .table-row:hover {
-        background-color: rgba(13, 110, 253, 0.1); /* Màu xanh nhạt khi hover */
+        background-color: rgba(13, 110, 253, 0.1);
         transition: background-color 0.3s ease;
     }
 </style>
 
 @code {
     private List<Category> categories = new();
+    private string searchTerm = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -81,8 +87,8 @@
     {
         try
         {
-            categories = (await CategoryService.GetCategories()).ToList();
-            StateHasChanged(); // Cập nhật UI
+            categories = (await CategoryService.GetCategories(searchTerm)).ToList();
+            StateHasChanged();
         }
         catch (Exception ex)
         {
@@ -90,10 +96,14 @@
         }
     }
 
+    private async Task SearchCategories()
+    {
+        await LoadCategories();
+    }
+
     private void CreateCategory()
     {
         Console.WriteLine("✅ Button Clicked! Navigating to /category/edit");
-        StateHasChanged();
         NavigationManager.NavigateTo("/category/edit");
     }
 
@@ -109,7 +119,7 @@
         {
             Console.WriteLine($"Deleting category: {categoryId}");
             await CategoryService.DeleteCategory(categoryId);
-            await LoadCategories(); // Cập nhật danh sách sau khi xóa
+            await LoadCategories();
         }
         catch (Exception ex)
         {

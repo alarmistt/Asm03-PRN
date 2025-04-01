@@ -34,6 +34,12 @@ namespace Services.Implement
             return await _meberRepository.GetMembers();
         }
 
+        public Task<IEnumerable<Member>> GetMembers(string email = "", string companyName = "", string country = "")
+        {
+
+            return _meberRepository.GetMembers(email, companyName, country);
+        }
+
         public Task<bool> Login(string username, string password)
         {
             throw new NotImplementedException();
