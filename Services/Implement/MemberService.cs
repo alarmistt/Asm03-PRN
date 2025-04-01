@@ -28,12 +28,16 @@ namespace Services.Implement
 
         public async Task<bool> UpdateMember(Member member)
         {
-            return await _memberRepository.UpdateMember(member);
+            bool isSuccess = await _memberRepository.UpdateMember(member);
+            await _hubContext.Clients.All.SendAsync("ReceiveMessage");
+            return isSuccess;
         }
 
         public async Task<bool> DeleteMember(int memberId)
         {
-            return await _memberRepository.DeleteMember(memberId);
+            bool result = await _memberRepository.DeleteMember(memberId);
+            await _hubContext.Clients.All.SendAsync("ReceiveMessage");
+            return result;
         }
 
         public async Task<Member> GetMember(int memberId)

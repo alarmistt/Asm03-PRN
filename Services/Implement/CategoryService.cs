@@ -54,7 +54,7 @@ namespace Services.Implement
             bool isSuccess = await _categoryRepository.UpdateCategory(category);
             if (isSuccess)
             {
-                await _hubContext.Clients.All.SendAsync("ReceiveMessage", "Category updated", category);
+                await _hubContext.Clients.All.SendAsync("ReceiveMessage");
             }
             return isSuccess;
         }

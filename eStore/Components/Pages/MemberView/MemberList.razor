@@ -97,26 +97,26 @@
 
 <style>
     body {
-        background-color: #f4f7fa;
+    background-color: #f4f7fa;
     }
 
     .table-row:hover {
-        background-color: rgba(74, 144, 226, 0.1);
-        transition: background-color 0.3s ease;
+    background-color: rgba(74, 144, 226, 0.1);
+    transition: background-color 0.3s ease;
     }
 
     .btn-primary {
-        background-color: #4a90e2;
-        border-color: #4a90e2;
+    background-color: #4a90e2;
+    border-color: #4a90e2;
     }
 
-        .btn-primary:hover {
-            background-color: #357abd;
-            border-color: #357abd;
-        }
+    .btn-primary:hover {
+    background-color: #357abd;
+    border-color: #357abd;
+    }
 
     .table th {
-        background-color: #4a90e2 !important;
+    background-color: #4a90e2 !important;
     }
 </style>
 
@@ -142,10 +142,13 @@
     {
         try
         {
-            var paginatedList = await MemberService.GetMembers(searchEmail, searchCompany, searchCity, currentPage, pageSize);
-            members = paginatedList.Items.ToList();
-            totalPages = paginatedList.TotalPages;
-            StateHasChanged();
+            await InvokeAsync(async () =>
+           {
+               var paginatedList = await MemberService.GetMembers(searchEmail, searchCompany, searchCity, currentPage, pageSize);
+               members = paginatedList.Items.ToList();
+               totalPages = paginatedList.TotalPages;
+               StateHasChanged();
+           });
         }
         catch (Exception ex)
         {
