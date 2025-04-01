@@ -40,6 +40,9 @@ namespace Services.Implement
         }
         public string CreatePaymentUrl(HttpContext httpContext, int orderId, decimal total)
         {
+            Console.WriteLine("Context: " + httpContext);
+            Console.WriteLine("OrderId: " + orderId);
+            Console.WriteLine("Total: " + total.ToString("G29"));
             var vnpParams = new Dictionary<string, string>
         {
             { "vnp_Version", _version },
@@ -47,7 +50,7 @@ namespace Services.Implement
             { "vnp_TmnCode", _tmnCode },
             { "vnp_CurrCode", _currCode },
             { "vnp_OrderType", _orderType },
-            { "vnp_Amount", (total * 100L).ToString() },
+            { "vnp_Amount", (total * 100L).ToString("G29") },
             { "vnp_OrderInfo", orderId.ToString() },
             { "vnp_Locale", _locale },
             { "vnp_ReturnUrl", _returnUrl },

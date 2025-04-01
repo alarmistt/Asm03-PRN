@@ -4,9 +4,12 @@
 @inject IOrderService OrderService
 @inject IMemberService MemberService
 @inject IProductService ProductService
+@inject IVnPayService VnPayService
 @inject NavigationManager NavigationManager
-<PageTitle>Order</PageTitle>
+@inject IHttpContextAccessor HttpContextAccessor
 @rendermode InteractiveServer
+<PageTitle>Order</PageTitle>
+
 
 <div class="container mt-5">
     <div class="card shadow-sm border-0 rounded bg-light">
@@ -29,10 +32,6 @@
                     </InputSelect>
                 </div>
 
-                <div class="mb-3">
-                    <label for="orderDate" class="form-label">Order Date</label>
-                    <InputDate id="orderDate" class="form-control" @bind-Value="order.OrderDate" />
-                </div>
 
                 <div class="mb-3">
                     <label for="requiredDate" class="form-label">Required Date</label>
@@ -60,18 +59,19 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var item in order.OrderDetails)
+                        @foreach (var item in TempOrderDetails)
                         {
                             <tr>
                                 <td>@Products.FirstOrDefault(p => p.ProductId == item.ProductId)?.ProductName</td>
                                 <td>@item.Quantity</td>
-                                <td>@item.UnitPrice</td>
+                                <td>@item.UnitPrice.ToString("C")</td>
                                 <td>
-                                    <button type="button" class="btn btn-danger btn-sm" @onclick="() => RemoveOrderDetail(item)">Remove</button>
+                                    <button type="button" class="btn btn-danger btn-sm" @onclick="() => RemoveTempOrderDetail(item)">Remove</button>
                                 </td>
                             </tr>
                         }
                     </tbody>
+
                 </table>
 
                 <div class="row">
@@ -88,8 +88,8 @@
                     <div class="col-md-3">
                         <label>Quantity</label>
                         <InputNumber class="form-control"
-                                     @bind-Value="Quantity"
-                                     @bind-Value:event="oninput" />
+                        @bind-Value="Quantity" />
+
 
 
 
@@ -112,7 +112,7 @@
                 <button type="submit" class="btn btn-primary">Create Order</button>
                 <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancel</button>
             </EditForm>
-            @if (string.IsNullOrEmpty(errorMessage))
+            @if (!string.IsNullOrEmpty(errorMessage))
             {
                 <div class="alert alert-danger mt-3">@errorMessage</div>
             }
@@ -125,16 +125,22 @@
     private OrderDetail newOrderDetail = new();
     private List<Member> Members = new();
     private List<Product> Products = new();
+    private List<OrderDetail> TempOrderDetails = new();
     private string errorMessage = string.Empty;
+    private string paymentUrl = string.Empty;
     private int Quantity
     {
         get => newOrderDetail.Quantity;
         set
         {
-            newOrderDetail.Quantity = value;
-            UpdateUnitPrice();
+            if (value >= 0) // Đảm bảo không có giá trị âm
+            {
+                newOrderDetail.Quantity = value;
+                UpdateUnitPrice();
+            }
         }
     }
+
 
     protected override async Task OnInitializedAsync()
     {
@@ -150,21 +156,28 @@
             newOrderDetail.UnitPrice = selectedProduct.UnitPrice * newOrderDetail.Quantity;
         }
     }
+    private void RemoveTempOrderDetail(OrderDetail item)
+    {
+        TempOrderDetails.Remove(item);
+    }
 
 
     private void AddOrderDetail()
     {
         if (newOrderDetail.ProductId > 0 && newOrderDetail.Quantity > 0)
         {
-            order.OrderDetails.Add(new OrderDetail
+            // Thêm vào danh sách tạm
+            TempOrderDetails.Add(new OrderDetail
                 {
                     ProductId = newOrderDetail.ProductId,
                     Quantity = newOrderDetail.Quantity,
-                    UnitPrice = newOrderDetail.UnitPrice // Không cần nhân lại
+                    UnitPrice = newOrderDetail.UnitPrice
                 });
+
             newOrderDetail = new OrderDetail(); // Reset form
         }
     }
+
 
 
     private void RemoveOrderDetail(OrderDetail item)
@@ -174,33 +187,22 @@
 
     private async Task HandleValidSubmit()
     {
-        // Kiểm tra xem Order có ít nhất một OrderDetail hay không
-        if (order.OrderDetails.Count == 0)
+        if (TempOrderDetails.Count == 0)
         {
             errorMessage = "Order must have at least one order detail.";
             return;
         }
 
-        // Cập nhật UnitPrice cho mỗi OrderDetail trong OrderDetails
-        foreach (var item in order.OrderDetails)
-        {
-            var selectedProduct = Products.FirstOrDefault(p => p.ProductId == item.ProductId);
-            if (selectedProduct != null)
-            {
-                // Cập nhật lại UnitPrice với giá trị mới (Price của sản phẩm * Quantity)
-                item.UnitPrice = selectedProduct.UnitPrice * item.Quantity;
-            }
-            else
-            {
-                item.UnitPrice = 0; // Nếu không có sản phẩm, gán UnitPrice = 0
-            }
-        }
+        // Chuyển danh sách tạm vào order thực
+        order.OrderDetails = new List<OrderDetail>(TempOrderDetails);
 
         try
         {
-            // Gửi yêu cầu tạo đơn hàng mới
-            await OrderService.CreateOrderAsync(order);
-            NavigationManager.NavigateTo("/orders"); // Điều hướng đến trang danh sách đơn hàng
+            order = await OrderService.CreateOrderAsync(order);
+
+            var httpContext = HttpContextAccessor.HttpContext;
+            paymentUrl = VnPayService.CreatePaymentUrl(httpContext, order.OrderId, order.CalculateTotalAmount() * 25000);
+            NavigationManager.NavigateTo(paymentUrl);
         }
         catch (Exception ex)
         {

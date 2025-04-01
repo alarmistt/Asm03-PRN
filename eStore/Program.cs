@@ -35,7 +35,7 @@ builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IOrderDetailRepository, OrderDetailRepository>();
 builder.Services.AddScoped<IOrderDetailService, OrderDetailService>();
 builder.Services.AddSignalR();
-
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("https://yourapi.com") });
 
 

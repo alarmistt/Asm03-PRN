@@ -2,7 +2,7 @@
 @using Services.Interface
 @inject IAuthenticationService AuthService
 @inject NavigationManager NavManager
-
+@rendermode InteractiveServer
 <h3>Đăng nhập</h3>
 
 @if (!string.IsNullOrEmpty(ErrorMessage))
