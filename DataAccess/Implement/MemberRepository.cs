@@ -63,13 +63,31 @@ namespace DataAccess.Implement
             return members;
         }
 
+        public async Task<IEnumerable<Member>> GetMembers(string email = "", string companyName = "", string country = "")
+        {
+            var query = _context.Member.AsQueryable();
+            if (!string.IsNullOrWhiteSpace(email))
+            {
+                query = query.Where(x => x.Email.ToLower().Contains(email.ToLower()));
+            }
+            if (!string.IsNullOrWhiteSpace(companyName))
+            {
+                query = query.Where(x => x.CompanyName.ToLower().Contains(companyName.ToLower()));
+            }
+            if (!string.IsNullOrWhiteSpace(country))
+            {
+                query = query.Where(x => x.Country.ToLower().Contains(country.ToLower()));
+            }
+            return await query.ToListAsync();
+        }
+
         public async Task<Member> GetMembersByEmailAddress(string emailAddress)
         {
-            var member = await _context.Member.FindAsync(emailAddress);
+            var exist = await _context.Member.FirstOrDefaultAsync(m => m.Email == emailAddress);
 
-            if (member != null)
+            if (exist != null)
             {
-                return member;
+                return exist;
             }
             else
             {

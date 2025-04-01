@@ -12,5 +12,6 @@ namespace Services.Interface
         Task<Member> GetMember(int memberId);
         Task<IEnumerable<Member>> GetMembers();
 
+        Task<IEnumerable<Member>> GetMembers(string email = "", string companyName = "", string country = "");
     }
 }
