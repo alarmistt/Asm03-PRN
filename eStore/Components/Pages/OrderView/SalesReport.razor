@@ -1,0 +1,107 @@
+﻿@page "/sales-report"
+@using Services.Interface
+@using Services.Models.SaleReport
+@rendermode InteractiveServer
+@inject IOrderService OrderService
+
+<h3>Sales Report</h3>
+
+<div class="row mb-3">
+    <div class="col-md-3">
+        <label for="startDate" class="form-label">Start Date</label>
+        <input @bind="startDate" @bind:event="oninput" type="date" class="form-control" id="startDate" />
+    </div>
+    <div class="col-md-3">
+        <label for="endDate" class="form-label">End Date</label>
+        <input @bind="endDate" @bind:event="oninput" type="date" class="form-control" id="endDate" />
+    </div>
+    <div class="col-md-2 d-flex align-items-end">
+        <button @onclick="LoadReport" class="btn btn-primary" disabled="@(startDate > endDate)">Generate Report</button>
+    </div>
+</div>
+
+@if (isLoading)
+{
+    <div class="text-center">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+}
+else if (salesReport != null && salesReport.Any())
+{
+    <div class="card">
+        <div class="card-header">
+            <h5>Sales Report from @startDate.ToShortDateString() to @endDate.ToShortDateString()</h5>
+        </div>
+        <div class="card-body">
+            <table class="table-striped table-hover table">
+                <thead>
+                    <tr>
+                        <th>Product Name</th>
+                        <th>Total Quantity Sold</th>
+                        <th>Total Sales</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in salesReport)
+                    {
+                        <tr>
+                            <td>@item.ProductName</td>
+                            <td>@item.TotalQuantity</td>
+                            <td>@item.TotalSales.ToString("C")</td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr class="table-active">
+                        <td colspan="2" class="fw-bold">Total Sales</td>
+                        <td class="fw-bold">@salesReport.Sum(r => r.TotalSales).ToString("C")</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+}
+else if (salesReport != null && !salesReport.Any())
+{
+    <div class="alert alert-warning">No data available.</div>
+}
+else if (hasError)
+{
+    <div class="alert alert-danger">Error loading sales data. Please try again.</div>
+}
+
+@code {
+    private DateTime startDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+    private DateTime endDate = DateTime.Now;
+    private List<SalesReportDto>? salesReport;
+    private bool isLoading;
+    private bool hasError;
+
+    private async Task LoadReport()
+    {
+        if (startDate > endDate)
+        {
+            hasError = true;
+            salesReport = null;
+            return;
+        }
+
+        try
+        {
+            isLoading = true;
+            hasError = false;
+            salesReport = await OrderService.GetSalesReport(startDate, endDate);
+        }
+        catch
+        {
+            hasError = true;
+            salesReport = null;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}
