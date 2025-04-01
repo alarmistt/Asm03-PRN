@@ -1,5 +1,8 @@
 ﻿using BusinessObject.Entities;
 using DataAccess.Interface;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Services.Interface;
 using Services.Models.SaleReport;
 using System;
@@ -14,11 +17,13 @@ namespace Services.Implement
     {
         private readonly IOrderRepository _orderRepository;
         private readonly IOrderDetailRepository _orderDetailRepository;
+        private readonly IHubContext<ChatHub> _hubContext;
 
-        public OrderService(IOrderRepository orderRepository, IOrderDetailRepository orderDetailRepository)
+        public OrderService(IOrderRepository orderRepository, IOrderDetailRepository orderDetailRepository, IHubContext<ChatHub> hubContext)
         {
             _orderRepository = orderRepository;
             _orderDetailRepository = orderDetailRepository;
+            _hubContext = hubContext;
         }
 
         public async Task<List<SalesReportDto>> GetSalesReport(DateTime startDate, DateTime endDate)
@@ -166,6 +171,8 @@ namespace Services.Implement
 
             // Thêm Order (với các OrderDetail theo cascade)
             await _orderRepository.AddAsync(order);
+
+            await _hubContext.Clients.All.SendAsync("ReceiveMessage");
             return order;
         }
 
