@@ -1,11 +1,12 @@
 ﻿using BusinessObject.Base;
 using BusinessObject.Entities;
+using Core;
 using DataAccess.Interface;
 using Microsoft.EntityFrameworkCore;
 
 namespace DataAccess.Implement
 {
-    public class MemberRepository : IMemeberRepository
+    public class MemberRepository : IMemberRepository
     {
         private readonly EStoreContext _context;
 
@@ -40,7 +41,6 @@ namespace DataAccess.Implement
             {
                 return false;
             }
-
         }
 
         public async Task<Member> GetMember(int memberId)
@@ -57,13 +57,13 @@ namespace DataAccess.Implement
             }
         }
 
-        public async Task<IEnumerable<Member>> GetMembers()
+        public async Task<PaginatedList<Member>> GetMembers(int pageNumber, int pageSize)
         {
-            var members = await _context.Member.ToListAsync();
-            return members;
+            var query = _context.Member.AsQueryable();
+            return await PaginatedList<Member>.CreateAsync(query, pageNumber, pageSize);
         }
 
-        public async Task<IEnumerable<Member>> GetMembers(string email = "", string companyName = "", string country = "")
+        public async Task<PaginatedList<Member>> GetMembers(string email, string companyName, string country, int pageNumber, int pageSize)
         {
             var query = _context.Member.AsQueryable();
             if (!string.IsNullOrWhiteSpace(email))
@@ -78,7 +78,12 @@ namespace DataAccess.Implement
             {
                 query = query.Where(x => x.Country.ToLower().Contains(country.ToLower()));
             }
-            return await query.ToListAsync();
+            return await PaginatedList<Member>.CreateAsync(query, pageNumber, pageSize);
+        }
+
+        public async Task<IEnumerable<Member>> GetMembers()
+        {
+            return await _context.Member.ToListAsync();
         }
 
         public async Task<Member> GetMembersByEmailAddress(string emailAddress)
@@ -102,19 +107,18 @@ namespace DataAccess.Implement
 
         public async Task<bool> UpdateMember(Member member)
         {
-            var exist = _context.Member.FindAsync(member.MemberId);
+            var exist = await _context.Member.FindAsync(member.MemberId);
 
             if (exist != null)
             {
                 _context.Member.Update(member);
-                _context.SaveChangesAsync();
+                await _context.SaveChangesAsync();
                 return true;
             }
             else
             {
                 return false;
             }
-
         }
     }
 }

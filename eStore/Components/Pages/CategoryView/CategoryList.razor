@@ -3,6 +3,7 @@
 @using Services.Interface
 @inject ICategoryService CategoryService
 @inject NavigationManager NavigationManager
+@using Microsoft.AspNetCore.SignalR.Client
 @rendermode InteractiveServer
 
 <div class="container my-5">
@@ -68,6 +69,16 @@
                         </tbody>
                     </table>
                 </div>
+
+                <div class="d-flex justify-content-between align-items-center mt-4">
+                    <button class="btn btn-outline-primary" @onclick="PreviousPage" disabled="@(!hasPreviousPage)">
+                        Previous
+                    </button>
+                    <span>Page @currentPage of @totalPages</span>
+                    <button class="btn btn-outline-primary" @onclick="NextPage" disabled="@(!hasNextPage)">
+                        Next
+                    </button>
+                </div>
             }
         </div>
     </div>
@@ -97,17 +108,28 @@
 @code {
     private List<Category> categories = new();
     private string searchTerm = string.Empty;
+    private int currentPage = 1;
+    private int totalPages = 1;
+    private const int pageSize = 5;
+    private bool hasPreviousPage => currentPage > 1;
+    private bool hasNextPage => currentPage < totalPages;
+
+    private HubConnection? hubConnection;
 
     protected override async Task OnInitializedAsync()
     {
         await LoadCategories();
+
+        await SetupSignalR();
     }
 
     private async Task LoadCategories()
     {
         try
         {
-            categories = (await CategoryService.GetCategories(searchTerm)).ToList();
+            var paginatedList = await CategoryService.GetCategories(searchTerm, currentPage, pageSize);
+            categories = paginatedList.Items.ToList();
+            totalPages = paginatedList.TotalPages;
             StateHasChanged();
         }
         catch (Exception ex)
@@ -118,6 +140,7 @@
 
     private async Task SearchCategories()
     {
+        currentPage = 1;
         await LoadCategories();
     }
 
@@ -144,6 +167,49 @@
         catch (Exception ex)
         {
             Console.WriteLine($"Error deleting category: {ex.Message}");
+        }
+    }
+
+    private async Task SetupSignalR()
+    {
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl(NavigationManager.ToAbsoluteUri("/chatHub"))
+            .WithAutomaticReconnect()
+            .Build();
+
+        hubConnection.On("ReceiveMessage", async () =>
+        {
+            Console.WriteLine("🔄 Category list updated!");
+            await LoadCategories();
+            StateHasChanged();
+        });
+
+        await hubConnection.StartAsync();
+    }
+
+    private async Task PreviousPage()
+    {
+        if (hasPreviousPage)
+        {
+            currentPage--;
+            await LoadCategories();
+        }
+    }
+
+    private async Task NextPage()
+    {
+        if (hasNextPage)
+        {
+            currentPage++;
+            await LoadCategories();
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.DisposeAsync();
         }
     }
 }

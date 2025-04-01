@@ -1,4 +1,5 @@
 ﻿using BusinessObject.Entities;
+using Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,7 +14,9 @@ namespace Services.Interface
         Task<bool> UpdateCategory(Category category);
         Task<bool> DeleteCategory(int categoryId);
         Task<Category> GetCategory(int categoryId);
-        Task<IEnumerable<Category>> GetCategories(string name = "");
+        Task<PaginatedList<Category>> GetCategories(string name, int pageNumber, int pageSize);
+
+
 
         Task<IEnumerable<Category>> GetCategories();
     }
