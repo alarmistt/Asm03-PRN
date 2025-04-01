@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Core;
+using System.ComponentModel.DataAnnotations;
 
 namespace BusinessObject.Entities
 {
@@ -18,8 +19,10 @@ namespace BusinessObject.Entities
 
         [Required]
         public string Country { get; set; }
+        [Required]
+        public string Role { get; set; } = "User";
 
-        [Required, StringLength(30), MinLength(6)]
+        [Required]
         public string Password { get; set; }
 
         public ICollection<Order> Orders { get; set; }

@@ -63,9 +63,9 @@ namespace DataAccess.Implement
             return members;
         }
 
-        public async Task<Member> GetMembersByEmailAddress(string emailAddress)
+        public async Task<Member?> GetMembersByEmailAddress(string emailAddress)
         {
-            var member = await _context.Member.FindAsync(emailAddress);
+            var member = await _context.Member.FirstOrDefaultAsync(me => me.Email.Equals(emailAddress));
 
             if (member != null)
             {
@@ -76,12 +76,6 @@ namespace DataAccess.Implement
                 return null;
             }
         }
-
-        public async Task<Member?> Login(string email, string password)
-        {
-            return await _context.Member.FirstOrDefaultAsync(x => x.Email == email && x.Password == password);
-        }
-
         public async Task<bool> UpdateMember(Member member)
         {
             var exist = _context.Member.FindAsync(member.MemberId);

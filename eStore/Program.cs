@@ -3,6 +3,7 @@ using DataAccess.Implement;
 using DataAccess.Interface;
 using eStore.Components;
 using eStore.DI;
+using Microsoft.AspNetCore.Components.Authorization;
 using Services.Implement;
 using Services.Interface;
 
@@ -13,11 +14,15 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 builder.Services.AddBlazoredSessionStorage();
 builder.Services.AddInfrastructure(builder.Configuration);
-builder.Services.AddAuthorization();
-
+builder.Services.AddAuthorizationCore();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminPolicy", policy => policy.RequireRole("Admin"));
+});
 builder.Services.AddServerSideBlazor();
 
-
+builder.Services.AddScoped<JwtAuthenticationStateProvider>();
+builder.Services.AddScoped<AuthenticationStateProvider>(provider => provider.GetRequiredService<JwtAuthenticationStateProvider>());
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
@@ -44,12 +49,12 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Error", createScopeForErrors: true);    
     app.UseHsts();
 }
-
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseHttpsRedirection();
 
 app.UseStaticFiles();
 app.UseAntiforgery();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
-
 app.Run();

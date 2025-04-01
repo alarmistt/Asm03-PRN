@@ -20,6 +20,7 @@ namespace eStore.DI
             services.AddDbContext<EStoreContext>(options =>
             options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
         }
+
         public static void AddAuthenticationStateProvider(this IServiceCollection services)
         {
             services.AddScoped<JwtAuthenticationStateProvider>();
@@ -40,6 +41,7 @@ namespace eStore.DI
                     ValidateAudience = true,
                     ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
+                    ClockSkew = TimeSpan.Zero,
                     ValidIssuer = configuration.GetValue<string>("JwtSettings:Issuer"), 
                     ValidAudience = configuration.GetValue<string>("JwtSettings:Audience"),
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(serectKey!)) 

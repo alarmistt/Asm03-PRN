@@ -1,4 +1,5 @@
 ﻿using BusinessObject.Entities;
+using Core;
 using DataAccess.Interface;
 using Services.Interface;
 
@@ -16,9 +17,13 @@ namespace Services.Implement
 
         public async Task<bool> AddMember(Member member)
         {
+            member.Password = this.HashPassword(member.Password);
             return await _meberRepository.AddMember(member);
         }
-
+        public string HashPassword(string password)
+        {
+            return BCrypt.Net.BCrypt.HashPassword(password);
+        }
         public async Task<bool> DeleteMember(int memberId)
         {
             return await _meberRepository.DeleteMember(memberId);

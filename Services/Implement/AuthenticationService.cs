@@ -1,7 +1,5 @@
-﻿using Blazored.SessionStorage;
-using BusinessObject.Entities;
+﻿using BusinessObject.Entities;
 using DataAccess.Interface;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using Services.Interface;
@@ -16,24 +14,34 @@ namespace Services.Implement
         private readonly JwtAuthenticationStateProvider _authStateProvider;
         private readonly IMemeberRepository _memeberRepository;
         private readonly IConfiguration _configuration;
+
         public AuthenticationService(JwtAuthenticationStateProvider authStateProvider, IMemeberRepository memeberRepository, IConfiguration configuration)
         {
             _authStateProvider = authStateProvider;
             _configuration = configuration;
             _memeberRepository = memeberRepository;
-
         }
 
-        public async Task<bool> LoginAsync(string username, string password)
+        public async Task<bool> LoginAsync(string email, string password)
         {
-            var account = await _memeberRepository.Login(username, password);
-            if (account != null)
+            var account = await _memeberRepository.GetMembersByEmailAddress(email);
+            if (account == null)
             {
-                string token = GenerateJwtToken(account);
-                await _authStateProvider.SetTokenAsync(token);
-                return true;
+                return false;
             }
-            return false;
+            
+            if (!VerifyPassword(password, account.Password))
+            {
+                return false;
+            }
+            string token = GenerateJwtToken(account);
+            await _authStateProvider.SetTokenAsync(token);
+            return true;
+        }
+
+        public bool VerifyPassword(string password, string hashedPassword)
+        {
+            return BCrypt.Net.BCrypt.Verify(password, hashedPassword);
         }
 
         public async Task LogoutAsync()
@@ -41,18 +49,17 @@ namespace Services.Implement
             await _authStateProvider.LogoutAsync();
         }
 
-        private string GenerateJwtToken(Member account)
+        public string GenerateJwtToken(Member account)
         {
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration.GetValue<string>("JwtSettings:SecretKey")!));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-            var claims = new[]
-            {
-            new Claim(JwtRegisteredClaimNames.Sub, account.Email),
-            new Claim(ClaimTypes.Role, "Admin"),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-        };
-
+            List<Claim> claims = new List<Claim>
+                    {
+                        new Claim("id", account.MemberId.ToString()),
+                        new Claim("email", account.Email ?? string.Empty),
+                        new Claim(ClaimsIdentity.DefaultRoleClaimType, account.Role ?? "User")
+                    };
+            Console.WriteLine(account.Role ?? "User");
             var token = new JwtSecurityToken(
                 issuer: _configuration.GetValue<string>("JwtSettings:Issuer"),
                 audience: _configuration.GetValue<string>("JwtSettings:Audience"),
@@ -62,6 +69,23 @@ namespace Services.Implement
             );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        public async Task<Member?> GetCurrentMember()
+        {
+            var authState = await _authStateProvider.GetAuthenticationStateAsync();
+            ClaimsPrincipal claimsPrincipal = authState.User;
+
+            if (claimsPrincipal.Identity?.IsAuthenticated == true)
+            {
+                var idClaim = claimsPrincipal.FindFirst("id");
+                if (idClaim != null && int.TryParse(idClaim.Value, out int memberId))
+                {
+                    return await _memeberRepository.GetMember(memberId);
+                }
+            }
+
+            return null;
         }
     }
 }
