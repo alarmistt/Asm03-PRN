@@ -13,5 +13,10 @@ namespace BusinessObject.Entities
         public string Description { get; set; }
 
         public ICollection<Product> Products { get; set; }
+
+        public static implicit operator bool(Category v)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

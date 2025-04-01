@@ -1,0 +1,198 @@
+﻿@page "/myaccount.{MemberId:int?}"
+@using BusinessObject.Entities
+@using Services.Interface
+@inject IMemberService MemberService
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+@inject HttpClient Http
+
+<h3>My Account</h3>
+
+@if (member == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <EditForm Model="member" OnValidSubmit="HandleValidSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label for="email" class="form-label">Email</label>
+            <InputText id="email" class="form-control" @bind-Value="member.Email" disabled />
+        </div>
+        <div class="mb-3">
+            <label for="companyName" class="form-label">Company Name</label>
+            <InputText id="companyName" class="form-control" @bind-Value="member.CompanyName" />
+        </div>
+        <div class="mb-3">
+            <label for="city" class="form-label">City</label>
+            <InputText id="city" class="form-control" @bind-Value="member.City" />
+        </div>
+        <div class="mb-3">
+            <label for="country" class="form-label">Country</label>
+            <InputText id="country" class="form-control" @bind-Value="member.Country" />
+        </div>
+        <div class="mb-3">
+            <label for="password" class="form-label">Password</label>
+            <InputText id="password" type="password" class="form-control" @bind-Value="member.Password" />
+        </div>
+
+        <button type="submit" class="btn btn-primary">Update</button>
+    </EditForm>
+}
+
+@code {
+    [Parameter]
+    public int? MemberId { get; set; }
+
+    private Member member = new();
+    private List<CountryData> countries = new();
+    private List<string> cities = new();
+    private string errorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCountries();
+
+        if (MemberId.HasValue)
+        {
+            try
+            {
+                member = await MemberService.GetMember(MemberId.Value);
+                if (!string.IsNullOrEmpty(member.Country))
+                {
+                    await LoadCities(member.Country);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading member: {ex.Message}");
+            }
+        }
+    }
+
+    private async Task LoadCountries()
+    {
+        try
+        {
+            var response = await Http.GetFromJsonAsync<List<CountryData>>("https://restcountries.com/v3.1/all");
+            if (response != null)
+            {
+                countries = response.OrderBy(c => c.Name.Common).ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading countries: {ex.Message}");
+        }
+    }
+
+    private async Task OnCountryChanged(ChangeEventArgs e)
+    {
+        var selectedCountry = e.Value?.ToString();
+        if (!string.IsNullOrEmpty(selectedCountry))
+        {
+            member.Country = selectedCountry;
+            cities.Clear();
+            await LoadCities(selectedCountry);
+            member.City = cities.Any() ? cities.First() : string.Empty; // Gán giá trị mặc định nếu có
+        }
+        else
+        {
+            cities.Clear();
+            member.City = string.Empty;
+        }
+        StateHasChanged();
+    }
+
+    private async Task LoadCities(string? country)
+    {
+        cities.Clear();
+        if (string.IsNullOrEmpty(country)) return;
+
+        try
+        {
+            var countryData = countries.FirstOrDefault(c => c.Name.Common == country);
+            if (countryData == null || string.IsNullOrEmpty(countryData.Cca2))
+            {
+                Console.WriteLine($"No country code found for {country}");
+                return;
+            }
+
+            var apiUrl = $"http://api.geonames.org/searchJSON?country={countryData.Cca2}&featureClass=A&featureCode=ADM1&maxRows=1000&username=ngocdat0203";
+            var response = await Http.GetFromJsonAsync<CityApiResponse>(apiUrl);
+
+            if (response != null && response.Geonames != null)
+            {
+                cities = response.Geonames
+                    .Where(c => !string.IsNullOrEmpty(c.Name))
+                    .Select(c => c.Name)
+                    .OrderBy(c => c)
+                    .ToList();
+                Console.WriteLine($"Loaded {cities.Count} cities for {country}");
+            }
+            else
+            {
+                Console.WriteLine($"No cities found for {country}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading cities: {ex.Message}");
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            if (MemberId.HasValue)
+            {
+                await MemberService.UpdateMember(member);
+            }
+            else
+            {
+                await MemberService.AddMember(member);
+            }
+            NavigationManager.NavigateTo("/members");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error saving member: {ex.Message}";
+            if (ex.InnerException != null)
+            {
+                errorMessage += $" Inner exception: {ex.InnerException.Message}";
+            }
+            Console.WriteLine(errorMessage);
+        }
+    }
+
+    private void Cancel()
+    {
+        NavigationManager.NavigateTo("/members");
+    }
+
+    public class CountryData
+    {
+        public CountryName Name { get; set; } = new CountryName();
+        public string Cca2 { get; set; } = string.Empty; // Mã ISO 2 chữ cái
+    }
+
+    public class CountryName
+    {
+        public string Common { get; set; } = string.Empty;
+    }
+
+    public class CityApiResponse
+    {
+        public List<CityData> Geonames { get; set; } = new List<CityData>();
+    }
+
+    public class CityData
+    {
+        public string Name { get; set; } = string.Empty;
+    }
+}
+

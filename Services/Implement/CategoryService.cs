@@ -1,4 +1,5 @@
 ﻿using BusinessObject.Entities;
+using Core;
 using DataAccess.Interface;
 using Microsoft.AspNetCore.SignalR;
 using Services.Interface;
@@ -15,15 +16,19 @@ namespace Services.Implement
         private readonly ICategoryRepository _categoryRepository;
         private readonly IProductRepository _productRepository;
 
-        public CategoryService(ICategoryRepository categoryRepository, IProductRepository productRepository)
+        private readonly IHubContext<ChatHub> _hubContext;
+
+        public CategoryService(ICategoryRepository categoryRepository, IProductRepository productRepository, IHubContext<ChatHub> hubContext)
         {
             _categoryRepository = categoryRepository;
             _productRepository = productRepository;
+            _hubContext = hubContext;
         }
         public async Task<bool> AddCategory(Category category)
         {
-            
-            return await _categoryRepository.AddCategoryAsync(category);
+            bool isSuccess = await _categoryRepository.AddCategoryAsync(category);
+            await _hubContext.Clients.All.SendAsync("ReceiveMessage", "Category added", category);     
+            return isSuccess;
         }
 
         public async Task<bool> DeleteCategory(int categoryId)
@@ -32,12 +37,31 @@ namespace Services.Implement
             {
                 throw new Exception("Category is referenced in Product");
             }
-            return await _categoryRepository.DeleteCategory(categoryId);
+
+            // Get the category before deleting it
+            Category category = await _categoryRepository.GetCategory(categoryId);
+
+            bool isSuccess = await _categoryRepository.DeleteCategory(categoryId);
+            if (isSuccess)
+            {
+                await _hubContext.Clients.All.SendAsync("ReceiveMessage", "Category deleted", category);
+            }
+            return isSuccess;
         }
 
-        public async Task<IEnumerable<Category>> GetCategories(string name = "")
+        public async Task<bool> UpdateCategory(Category category)
+        {
+            bool isSuccess = await _categoryRepository.UpdateCategory(category);
+            if (isSuccess)
+            {
+                await _hubContext.Clients.All.SendAsync("ReceiveMessage", "Category updated", category);
+            }
+            return isSuccess;
+        }
+
+        public async Task<PaginatedList<Category>> GetCategories(string name, int pageNumber, int pageSize)
         {   
-            return await _categoryRepository.GetCategories(name);
+            return await _categoryRepository.GetCategories(name, pageNumber, pageSize);
         }
 
         public async Task<IEnumerable<Category>> GetCategories()
@@ -51,10 +75,6 @@ namespace Services.Implement
             
         }
 
-        public async Task<bool> UpdateCategory(Category category)
-        {
-           
-            return await _categoryRepository.UpdateCategory(category);
-        }
+        
     }
 }

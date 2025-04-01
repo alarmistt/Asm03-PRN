@@ -14,9 +14,9 @@ namespace Services.Implement
     public class AuthenticationService : IAuthenticationService
     {
         private readonly JwtAuthenticationStateProvider _authStateProvider;
-        private readonly IMemeberRepository _memeberRepository;
+        private readonly IMemberRepository _memeberRepository;
         private readonly IConfiguration _configuration;
-        public AuthenticationService(JwtAuthenticationStateProvider authStateProvider, IMemeberRepository memeberRepository, IConfiguration configuration)
+        public AuthenticationService(JwtAuthenticationStateProvider authStateProvider, IMemberRepository memeberRepository, IConfiguration configuration)
         {
             _authStateProvider = authStateProvider;
             _configuration = configuration;

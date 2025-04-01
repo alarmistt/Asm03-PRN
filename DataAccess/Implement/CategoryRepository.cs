@@ -1,14 +1,8 @@
-﻿using AutoMapper.Execution;
-using BusinessObject.Base;
+﻿using BusinessObject.Base;
 using BusinessObject.Entities;
+using Core;
 using DataAccess.Interface;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace DataAccess.Implement
 {
@@ -20,9 +14,10 @@ namespace DataAccess.Implement
         {
             _context = context;
         }
+
         public async Task<bool> AddCategoryAsync(Category category)
         {
-            var exist = await _context.Categories.FindAsync(category.CategoryName);
+            var exist = await _context.Categories.FirstOrDefaultAsync(c => c.CategoryName == category.CategoryName);
 
             if (exist != null)
             {
@@ -48,6 +43,22 @@ namespace DataAccess.Implement
             }
         }
 
+        public async Task<PaginatedList<Category>> GetCategories(string name, int pageNumber, int pageSize)
+        {
+            var query = _context.Categories.AsQueryable();
+            if (!string.IsNullOrWhiteSpace(name))
+            {
+                query = query.Where(x => x.CategoryName.ToLower().Contains(name.ToLower()));
+            }
+            return await PaginatedList<Category>.CreateAsync(query, pageNumber, pageSize);
+        }
+
+        public async Task<PaginatedList<Category>> GetCategories(int pageNumber, int pageSize)
+        {
+            var query = _context.Categories.AsQueryable();
+            return await PaginatedList<Category>.CreateAsync(query, pageNumber, pageSize);
+        }
+
         public async Task<IEnumerable<Category>> GetCategories(string name = "")
         {
             var query = _context.Categories.AsQueryable();
@@ -63,7 +74,7 @@ namespace DataAccess.Implement
             return await _context.Categories.ToListAsync();
         }
 
-        public async Task<Category?> GetCategory(int categoryId)
+        public async Task<Category> GetCategory(int categoryId)
         {
             return await _context.Categories.FindAsync(categoryId);
         }
