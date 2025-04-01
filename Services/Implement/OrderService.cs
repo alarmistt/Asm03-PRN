@@ -153,7 +153,7 @@ namespace Services.Implement
 
             // Validate Order
             order.ValidateOrder();
-            order.OrderDate = DateTime.UtcNow;
+            order.OrderDate = DateTime.Now;
 
             // Gộp các OrderDetail trùng nhau dựa vào ProductId
             var mergedDetails = order.OrderDetails
@@ -209,6 +209,11 @@ namespace Services.Implement
 
             // Xóa đơn hàng
             await _orderRepository.DeleteAsync(orderId);
+        }
+
+        public async Task UpdateOrderStatus(int orderId, string status)
+        {
+            await _orderRepository.UpdateOrderStatus(orderId, status);
         }
     }
 }
