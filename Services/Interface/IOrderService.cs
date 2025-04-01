@@ -18,5 +18,6 @@ namespace Services.Interface
         Task<IEnumerable<Order>> GetOrdersByMemberIdAsync(int memberId);
         Task<List<SalesReportDto>> GetSalesReport(DateTime startDate, DateTime endDate);
         Task CheckAndUpdatePendingOrders();
+        Task UpdateOrderStatus(int orderId, string status);
     }
 }

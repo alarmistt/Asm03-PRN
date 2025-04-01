@@ -2,15 +2,17 @@
 @using BusinessObject.Entities
 @using Services.Interface
 @inject IOrderService OrderService
+@inject IVnPayService VnPayService 
 @inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+@inject IHttpContextAccessor HttpContextAccessor
 @using Microsoft.AspNetCore.SignalR.Client
 @rendermode InteractiveServer
 <PageTitle>Order</PageTitle>
 
-
-<div class="container mt-5">
-    <div class="card shadow-sm border-0 rounded bg-light">
-        <div class="card-header bg-warning-subtle text-dark text-center py-3 rounded-top">
+<div class="mt-5 container">
+    <div class="card bg-light rounded border-0 shadow-sm">
+        <div class="card-header bg-warning-subtle text-dark py-3 rounded-top text-center">
             <h3 class="mb-0">Orders</h3>
         </div>
         <div class="card-body">
@@ -23,14 +25,14 @@
 
             @if (orders == null || !orders.Any())
             {
-                <div class="text-center py-5">
+                <div class="py-5 text-center">
                     <p class="text-muted">No orders available. Start by adding a new one.</p>
                 </div>
             }
             else
             {
                 <div class="table-responsive">
-                    <table class="table table-bordered table-hover align-middle text-center bg-white shadow-sm">
+                    <table class="table-bordered table-hover bg-white table text-center align-middle shadow-sm">
                         <thead class="bg-secondary text-white">
                             <tr>
                                 <th>Order ID</th>
@@ -39,6 +41,7 @@
                                 <th>Required Date</th>
                                 <th>Shipped Date</th>
                                 <th>Freight</th>
+                                <th>Status</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -52,6 +55,7 @@
                                     <td>@order.RequiredDate.ToShortDateString()</td>
                                     <td>@(order.ShippedDate?.ToShortDateString() ?? "N/A")</td>
                                     <td>@order.Freight</td>
+                                    <td>@order.Status</td>
                                     <td>
                                         <button class="btn btn-outline-warning btn-sm mx-1" @onclick="() => EditOrder(order.OrderId)">
                                             <i class="bi bi-pencil-square"></i> Edit
@@ -59,6 +63,12 @@
                                         <button class="btn btn-outline-danger btn-sm mx-1" @onclick="() => DeleteOrder(order.OrderId)">
                                             <i class="bi bi-trash"></i> Delete
                                         </button>
+                                        @if (order.Status == "Pending") // Hiển thị nút Pay nếu Status là Pending
+                                        {
+                                            <button class="btn btn-outline-primary btn-sm mx-1" @onclick="() => PayOrder(order.OrderId)">
+                                                <i class="bi bi-credit-card"></i> Pay
+                                            </button>
+                                        }
                                     </td>
                                 </tr>
                             }
@@ -72,7 +82,7 @@
 
 <style>
     .table-row:hover {
-        background-color: rgba(13, 110, 253, 0.1); /* Màu xanh nhạt khi hover */
+        background-color: rgba(13, 110, 253, 0.1);
         transition: background-color 0.3s ease;
     }
 </style>
@@ -80,11 +90,49 @@
 @code {
     private List<Order> orders = new();
     private HubConnection? hubConnection;
+    private string? paymentMessage;
+    private int orderIdToUpdate;
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadOrders();
+        var uri = new Uri(NavigationManager.Uri);
+        var queryParams = System.Web.HttpUtility.ParseQueryString(uri.Query);
+        string? responseCode = queryParams["vnp_ResponseCode"];
+        if (!string.IsNullOrEmpty(responseCode))
+        {
+            string orderIdStr = queryParams["vnp_OrderInfo"] ?? "0";
+            orderIdToUpdate = int.TryParse(orderIdStr, out var id) ? id : 0;
+
+            if (responseCode == "00")
+            {
+                paymentMessage = "Payment Successful!";
+                if (orderIdToUpdate > 0)
+                {
+                    await OrderService.UpdateOrderStatus(orderIdToUpdate, "Processing");
+                    Console.WriteLine($"Order {orderIdToUpdate} updated to Processing");
+                }
+            }
+            else
+            {
+                paymentMessage = $"Payment Failed!";
+            }
+            await LoadOrders();
+        }
+        else
+        {
+            await LoadOrders();
+        }
+
         await SetupSignalR();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && paymentMessage != null)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", paymentMessage);
+            paymentMessage = null;
+        }
     }
 
     private async Task LoadOrders()
@@ -94,10 +142,8 @@
             await InvokeAsync(async () =>
             {
                 orders = (await OrderService.GetAllOrdersAsync()).ToList();
-                StateHasChanged(); // Cập nhật UI
+                StateHasChanged();
             });
-
-
         }
         catch (Exception ex)
         {
@@ -124,7 +170,7 @@
         {
             Console.WriteLine($"Deleting order: {orderId}");
             await OrderService.DeleteOrderAsync(orderId);
-            await LoadOrders(); // Cập nhật danh sách sau khi xóa
+            await LoadOrders();
         }
         catch (Exception ex)
         {
@@ -132,22 +178,44 @@
         }
     }
 
+    private async Task PayOrder(int orderId)
+    {
+        try
+        {
+            // Lấy thông tin đơn hàng từ danh sách orders
+            var order = orders.FirstOrDefault(o => o.OrderId == orderId);
+            if (order != null)
+            {
+                // Giả định Order có phương thức CalculateTotalAmount() như trong /order/create
+                var httpContext = HttpContextAccessor.HttpContext;
+                string paymentUrl = VnPayService.CreatePaymentUrl(httpContext, order.OrderId, order.CalculateTotalAmount() * 25000);
+                NavigationManager.NavigateTo(paymentUrl);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error initiating payment: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("alert", $"Error initiating payment: {ex.Message}");
+        }
+    }
+
     private async Task SetupSignalR()
     {
         hubConnection = new HubConnectionBuilder()
-            .WithUrl(NavigationManager.ToAbsoluteUri("/chatHub"))  // Kết nối đến Hub
+            .WithUrl(NavigationManager.ToAbsoluteUri("/chatHub"))
             .WithAutomaticReconnect()
             .Build();
 
         hubConnection.On("ReceiveMessage", async () =>
         {
             Console.WriteLine("🔄 Order list updated!");
-            await LoadOrders();  // Tải lại danh sách khi có tín hiệu
+            await LoadOrders();
             StateHasChanged();
         });
 
         await hubConnection.StartAsync();
     }
+
     public async ValueTask DisposeAsync()
     {
         if (hubConnection is not null)
