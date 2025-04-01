@@ -146,6 +146,7 @@
     {
         Members = (await MemberService.GetMembers()).ToList();
         Products = (await ProductService.GetAllProductsAsync()).ToList();
+        
     }
 
     private void UpdateUnitPrice()

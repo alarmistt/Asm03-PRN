@@ -46,7 +46,7 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Error", createScopeForErrors: true);    
     app.UseHsts();
 }
-
+app.MapHub<ChatHub>("/chatHub");
 app.UseHttpsRedirection();
 
 app.UseStaticFiles();
