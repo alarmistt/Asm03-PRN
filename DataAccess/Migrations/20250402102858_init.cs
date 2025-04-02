@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace BusinessObject.Migrations
+namespace DataAccess.Migrations
 {
     /// <inheritdoc />
     public partial class init : Migration
@@ -18,7 +18,8 @@ namespace BusinessObject.Migrations
                     CategoryId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     CategoryName = table.Column<string>(type: "nvarchar(40)", maxLength: 40, nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    DeletedDate = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -36,7 +37,8 @@ namespace BusinessObject.Migrations
                     City = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Country = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Role = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Password = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    Password = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    DeletedDate = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -53,7 +55,8 @@ namespace BusinessObject.Migrations
                     ProductName = table.Column<string>(type: "nvarchar(40)", maxLength: 40, nullable: false),
                     Weight = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     UnitPrice = table.Column<decimal>(type: "money", nullable: false),
-                    UnitsInStock = table.Column<int>(type: "int", nullable: false)
+                    UnitsInStock = table.Column<int>(type: "int", nullable: false),
+                    DeletedDate = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -77,6 +80,7 @@ namespace BusinessObject.Migrations
                     RequiredDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     ShippedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
                     Freight = table.Column<decimal>(type: "money", nullable: false),
+                    DeletedDate = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
                     Status = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
@@ -98,7 +102,8 @@ namespace BusinessObject.Migrations
                     ProductId = table.Column<int>(type: "int", nullable: false),
                     UnitPrice = table.Column<decimal>(type: "money", nullable: false),
                     Quantity = table.Column<int>(type: "int", nullable: false),
-                    Discount = table.Column<float>(type: "real", nullable: false)
+                    Discount = table.Column<float>(type: "real", nullable: false),
+                    DeletedDate = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true)
                 },
                 constraints: table =>
                 {

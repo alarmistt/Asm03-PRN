@@ -1,16 +1,15 @@
 ﻿@inherits LayoutComponentBase
-@inject JwtAuthenticationStateProvider AuthenticationStateProvider
-
+@inject JwtAuthenticationStateProvider AuthStateProvider
 @code {
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            AuthenticationStateProvider.SetPrerendering(false);
-            await InvokeAsync(StateHasChanged);
+            await AuthStateProvider.Initialize();
         }
     }
 }
+
 <div class="page">
     <main>
        @* <div class="top-row px-4">
