@@ -7,9 +7,13 @@
 @inject IJSRuntime JSRuntime
 @inject IHttpContextAccessor HttpContextAccessor
 @using Microsoft.AspNetCore.SignalR.Client
+@inject JwtAuthenticationStateProvider AuthenticationStateProvider
 @rendermode InteractiveServer
 <PageTitle>Order</PageTitle>
 
+<CascadingAuthenticationState>
+    <AuthorizeView Roles="Admin,User">
+<Authorized Context="orderContext">
 <div class="mt-5 container">
     <div class="card bg-light rounded border-0 shadow-sm">
         <div class="card-header bg-warning-subtle text-dark py-3 rounded-top text-center">
@@ -63,7 +67,7 @@
                                         <button class="btn btn-outline-danger btn-sm mx-1" @onclick="() => DeleteOrder(order.OrderId)">
                                             <i class="bi bi-trash"></i> Delete
                                         </button>
-                                        @if (order.Status == "Pending") // Hiển thị nút Pay nếu Status là Pending
+                                        @if (order.Status == "Pending") 
                                         {
                                             <button class="btn btn-outline-primary btn-sm mx-1" @onclick="() => PayOrder(order.OrderId)">
                                                 <i class="bi bi-credit-card"></i> Pay
@@ -79,7 +83,14 @@
         </div>
     </div>
 </div>
-
+        </Authorized>
+        <NotAuthorized>
+            <div class="alert alert-danger" role="alert">
+                You are not authorized to view this page.
+            </div>
+        </NotAuthorized>
+    </AuthorizeView>
+</CascadingAuthenticationState>
 <style>
     .table-row:hover {
         background-color: rgba(13, 110, 253, 0.1);
@@ -223,4 +234,5 @@
             await hubConnection.DisposeAsync();
         }
     }
+
 }

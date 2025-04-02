@@ -1,11 +1,11 @@
-﻿@page "/myaccount/{MemberId:int?}"
+﻿@page "/myaccount"
 @using BusinessObject.Entities
 @using Services.Interface
 @inject IMemberService MemberService
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
 @inject HttpClient Http
-
+@inject JwtAuthenticationStateProvider AuthProvider
 <h3>My Account</h3>
 
 @if (member == null)
@@ -44,8 +44,6 @@ else
 }
 
 @code {
-    [Parameter]
-    public int? MemberId { get; set; }
 
     private Member member = new();
     private List<CountryData> countries = new();
@@ -55,12 +53,12 @@ else
     protected override async Task OnInitializedAsync()
     {
         await LoadCountries();
-
-        if (MemberId.HasValue)
+        int? memberId = await AuthProvider.GetIdRoleAsync();
+        if (memberId.HasValue)
         {
             try
             {
-                member = await MemberService.GetMember(MemberId.Value);
+                member = await MemberService.GetMember(memberId.Value);
                 if (!string.IsNullOrEmpty(member.Country))
                 {
                     await LoadCities(member.Country);
@@ -148,15 +146,12 @@ else
     {
         try
         {
-            if (MemberId.HasValue)
+            int? memberId = await AuthProvider.GetIdRoleAsync();
+            if (memberId.HasValue)
             {
                 await MemberService.UpdateMember(member);
-            }
-            else
-            {
-                await MemberService.AddMember(member);
-            }
-            NavigationManager.NavigateTo("/members");
+            }           
+            NavigationManager.NavigateTo("/myaccount");
         }
         catch (Exception ex)
         {
