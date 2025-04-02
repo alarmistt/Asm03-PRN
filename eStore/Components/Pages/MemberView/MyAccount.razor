@@ -6,7 +6,7 @@
 @inject IJSRuntime JSRuntime
 @inject HttpClient Http
 @inject IHttpContextAccessor HttpContextAccessor
-
+@inject JwtAuthenticationStateProvider AuthenticationStateProvider
 <h3>My Account</h3>
 
 @if (member == null)
@@ -71,16 +71,16 @@ else
     protected override async Task OnInitializedAsync()
     {
         await LoadCountries();
-
-        var user = HttpContextAccessor.HttpContext?.User;
-        if (user?.Identity?.IsAuthenticated == true)
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if (user != null)
         {
-            var userId = user.FindFirst("id")?.Value;
-            if (!string.IsNullOrEmpty(userId))
+            var userId = await AuthenticationStateProvider.GetIdRoleAsync();
+            if (userId != null)
             {
                 try
                 {
-                    member = await MemberService.GetMember(int.Parse(userId));
+                    member = await MemberService.GetMember(userId ?? default);
                     if (!string.IsNullOrEmpty(member.Country))
                     {
                         await LoadCities(member.Country);
