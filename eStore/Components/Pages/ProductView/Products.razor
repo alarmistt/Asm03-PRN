@@ -5,7 +5,7 @@
 @inject ICategoryService CategoryService
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JS
-
+@using Microsoft.AspNetCore.SignalR.Client
 @rendermode InteractiveServer
 
 <div class="container-fluid my-5 px-4">
@@ -203,6 +203,7 @@
     private List<Product> products = new();
     private List<Product> filteredProducts = new();
     private List<Category> categories = new();
+    private HubConnection? hubConnection;
 
     // Two-way binding properties with automatic filtering
     private string _searchName = "";
@@ -212,7 +213,7 @@
         set
         {
             _searchName = value;
-            FilterProducts(); // Auto-search on input change
+            FilterProducts();
         }
     }
 
@@ -223,7 +224,7 @@
         set
         {
             _searchPriceText = value;
-            FilterProducts(); // Auto-search on input change
+            FilterProducts();
         }
     }
 
@@ -234,7 +235,7 @@
         set
         {
             _selectedCategoryId = value;
-            FilterProducts(); // Auto-filter on category change
+            FilterProducts();
         }
     }
 
@@ -245,16 +246,20 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadProducts();
+        await SetupSignalR();
     }
 
     private async Task LoadProducts()
     {
         try
         {
-            products = (await ProductService.GetAllProductsAsync()).ToList();
-            categories = (await CategoryService.GetCategories()).ToList();
-            FilterProducts();
-            StateHasChanged();
+            await InvokeAsync(async () =>
+            {
+                products = (await ProductService.GetAllProductsAsync()).ToList();
+                categories = (await CategoryService.GetCategories()).ToList();
+                FilterProducts();
+                StateHasChanged();
+            });
         }
         catch (Exception ex)
         {
@@ -330,6 +335,31 @@
         {
             deleteErrorMessage = $"Error deleting product: {ex.Message}";
             StateHasChanged();
+        }
+    }
+
+    private async Task SetupSignalR()
+    {
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl(NavigationManager.ToAbsoluteUri("/chatHub"))
+            .WithAutomaticReconnect()
+            .Build();
+
+        hubConnection.On("ReceiveMessage", async () =>
+        {
+            Console.WriteLine("🔄 Product list updated!");
+            await LoadProducts();
+            StateHasChanged();
+        });
+
+        await hubConnection.StartAsync();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.DisposeAsync();
         }
     }
 }
