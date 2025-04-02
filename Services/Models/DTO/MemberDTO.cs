@@ -26,7 +26,7 @@ namespace Services.Models.DTO
         [Required]
         public string Role { get; set; } = "User";
 
-        [Required]
+        
         public string Password { get; set; }
     }
 }

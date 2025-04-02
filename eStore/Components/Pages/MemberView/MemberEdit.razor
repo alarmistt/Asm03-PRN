@@ -5,9 +5,10 @@
 @inject IMemberService MemberService
 @inject NavigationManager NavigationManager
 @inject HttpClient Http
+@using System.Globalization
+@using System.Text
 
 @rendermode InteractiveServer
-
 
 <div class="container my-5">
     <div class="card shadow-lg border-0 rounded-3" style="background-color: #ffffff; max-width: 700px; margin: 0 auto;">
@@ -34,7 +35,9 @@
                             <option value="">-- Select a country --</option>
                             @foreach (var country in countries)
                             {
-                                <option value="@country.Name.Common" selected="@(member.Country == country.Name.Common)">@country.Name.Common</option>
+                                <option value="@country.Name.Common" selected="@(member.Country == country.Name.Common)">
+                                    @country.Name.Common
+                                </option>
                             }
                         </select>
                     </div>
@@ -49,8 +52,11 @@
                         </select>
                     </div>
                     <div class="col-12 mb-3">
-                        <label for="Password" class="form-label fw-semibold text-muted">Password</label>
-                        <InputText id="Password" class="form-control rounded-3" type="password" @bind-Value="member.Password" placeholder="Enter password" />
+                        <label for="Password" class="form-label fw-semibold text-muted">@(MemberId == null ? "Password" : "New Password")</label>
+                        <InputText id="Password" class="form-control rounded-3" type="password" @bind-Value="newPassword" placeholder="@(MemberId == null ? "Enter password" : "Enter new password")" />
+                        <small class="text-muted">
+                            @(MemberId == null ? "Password is required." : "Leave blank to keep current password.")
+                        </small>
                     </div>
                 </div>
 
@@ -73,7 +79,6 @@
     </div>
 </div>
 
-
 @code {
     [Parameter]
     public int? MemberId { get; set; }
@@ -82,6 +87,8 @@
     private List<CountryData> countries = new();
     private List<string> cities = new();
     private string errorMessage = string.Empty;
+    private string GeoNamesUsername = "ngocdat0203";
+    private string newPassword = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -108,15 +115,24 @@
     {
         try
         {
-            var response = await Http.GetFromJsonAsync<List<CountryData>>("https://restcountries.com/v3.1/all");
-            if (response != null)
+            var apiUrl = $"http://api.geonames.org/countryInfoJSON?username={GeoNamesUsername}";
+            var response = await Http.GetFromJsonAsync<CountryApiResponse>(apiUrl);
+
+            if (response?.Geonames != null)
             {
-                countries = response.OrderBy(c => c.Name.Common).ToList();
+                countries = response.Geonames
+                    .Select(c => new CountryData { Name = new CountryName { Common = c.CountryName }, Cca2 = c.CountryCode })
+                    .OrderBy(c => c.Name.Common)
+                    .ToList();
+            }
+            else
+            {
+                errorMessage = "No countries found in the response.";
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error loading countries: {ex.Message}");
+            errorMessage = $"Error loading countries: {ex.Message}";
         }
     }
 
@@ -128,7 +144,7 @@
             member.Country = selectedCountry;
             cities.Clear();
             await LoadCities(selectedCountry);
-            member.City = cities.Any() ? cities.First() : string.Empty; // Gán giá trị mặc định nếu có
+            member.City = cities.Any() ? cities.First() : string.Empty; // Default to first city if available
         }
         else
         {
@@ -145,14 +161,15 @@
 
         try
         {
-            var countryData = countries.FirstOrDefault(c => c.Name.Common == country);
+            var countryData = countries.FirstOrDefault(c => string.Equals(c.Name.Common, country, StringComparison.OrdinalIgnoreCase));
             if (countryData == null || string.IsNullOrEmpty(countryData.Cca2))
             {
-                Console.WriteLine($"No country code found for {country}");
+                errorMessage = $"No country code found for {country}";
+                Console.WriteLine(errorMessage);
                 return;
             }
 
-            var apiUrl = $"http://api.geonames.org/searchJSON?country={countryData.Cca2}&featureClass=A&featureCode=ADM1&maxRows=1000&username=ngocdat0203";
+            var apiUrl = $"http://api.geonames.org/searchJSON?country={countryData.Cca2}&featureClass=A&featureCode=ADM1&maxRows=1000&username={GeoNamesUsername}";
             var response = await Http.GetFromJsonAsync<CityApiResponse>(apiUrl);
 
             if (response != null && response.Geonames != null)
@@ -166,12 +183,14 @@
             }
             else
             {
-                Console.WriteLine($"No cities found for {country}");
+                errorMessage = $"No cities found for {country}";
+                Console.WriteLine(errorMessage);
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error loading cities: {ex.Message}");
+            errorMessage = $"Error loading cities: {ex.Message}";
+            Console.WriteLine(errorMessage);
         }
     }
 
@@ -181,10 +200,26 @@
         {
             if (MemberId.HasValue)
             {
+                if (!string.IsNullOrWhiteSpace(newPassword))
+                {
+                    member.Password = newPassword; // Only update if user enters a new password
+                }
+                else
+                {
+                    // Keep the current password if nothing entered
+                    var existingMember = await MemberService.GetMember(MemberId.Value);
+                    member.Password = null;
+                }
                 await MemberService.UpdateMember(member);
             }
             else
             {
+                if (string.IsNullOrWhiteSpace(newPassword))
+                {
+                    errorMessage = "Password is required.";
+                    return;
+                }
+                member.Password = newPassword;
                 await MemberService.AddMember(member);
             }
             NavigationManager.NavigateTo("/members");
@@ -206,10 +241,19 @@
         NavigationManager.NavigateTo("/members");
     }
 
+    public class CountryApiResponse
+    {
+        public List<Geoname> Geonames { get; set; } = new List<Geoname>();
+    }
+    public class Geoname
+    {
+        public string CountryName { get; set; } = string.Empty;
+        public string CountryCode { get; set; } = string.Empty;
+    }
     public class CountryData
     {
         public CountryName Name { get; set; } = new CountryName();
-        public string Cca2 { get; set; } = string.Empty; 
+        public string Cca2 { get; set; } = string.Empty;
     }
 
     public class CountryName
@@ -227,4 +271,3 @@
         public string Name { get; set; } = string.Empty;
     }
 }
-
