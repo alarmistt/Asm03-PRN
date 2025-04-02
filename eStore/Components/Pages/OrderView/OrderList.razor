@@ -11,9 +11,7 @@
 @rendermode InteractiveServer
 <PageTitle>Order</PageTitle>
 
-<CascadingAuthenticationState>
-    <AuthorizeView Roles="Admin,User">
-<Authorized Context="orderContext">
+
 <div class="mt-5 container">
     <div class="card bg-light rounded border-0 shadow-sm">
         <div class="card-header bg-warning-subtle text-dark py-3 rounded-top text-center">
@@ -89,14 +87,7 @@
         </div>
     </div>
 </div>
-        </Authorized>
-        <NotAuthorized>
-            <div class="alert alert-danger" role="alert">
-                You are not authorized to view this page.
-            </div>
-        </NotAuthorized>
-    </AuthorizeView>
-</CascadingAuthenticationState>
+
 <style>
     .table-row:hover {
         background-color: rgba(13, 110, 253, 0.1);
