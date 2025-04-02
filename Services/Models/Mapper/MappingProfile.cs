@@ -8,6 +8,7 @@ public class MappingProfile : Profile
     public MappingProfile()
     {
         CreateMap<Category, CategoryDTO>().ReverseMap();
+        CreateMap<Member, MemberDTO>().ReverseMap();
         CreateMap(typeof(PaginatedList<>), typeof(PaginatedList<>)).ConvertUsing(typeof(PaginatedListConverter<,>));
     }
 }
