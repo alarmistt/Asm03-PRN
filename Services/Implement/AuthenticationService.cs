@@ -24,16 +24,26 @@ namespace Services.Implement
 
         }
 
-        public async Task<bool> LoginAsync(string username, string password)
+        public async Task<bool> LoginAsync(string email, string password)
         {
-            var account = await _memeberRepository.Login(username, password);
-            if (account != null)
+            var account = await _memeberRepository.GetMembersByEmailAddress(email);
+            if (account == null)
             {
-                string token = GenerateJwtToken(account);
-                await _authStateProvider.SetTokenAsync(token);
-                return true;
+                return false;
             }
-            return false;
+
+            if (!VerifyPassword(password, account.Password))
+            {
+                return false;
+            }
+            string token = GenerateJwtToken(account);
+            await _authStateProvider.SetTokenAsync(token);
+            return true;
+        }
+
+        public bool VerifyPassword(string password, string hashedPassword)
+        {
+            return BCrypt.Net.BCrypt.Verify(password, hashedPassword);
         }
 
         public async Task LogoutAsync()
@@ -41,18 +51,17 @@ namespace Services.Implement
             await _authStateProvider.LogoutAsync();
         }
 
-        private string GenerateJwtToken(Member account)
+        public string GenerateJwtToken(Member account)
         {
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration.GetValue<string>("JwtSettings:SecretKey")!));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-            var claims = new[]
-            {
-            new Claim(JwtRegisteredClaimNames.Sub, account.Email),
-            new Claim(ClaimTypes.Role, "Admin"),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-        };
-
+            List<Claim> claims = new List<Claim>
+                    {
+                        new Claim("id", account.MemberId.ToString()),
+                        new Claim("email", account.Email ?? string.Empty),
+                        new Claim(ClaimsIdentity.DefaultRoleClaimType, account.Role ?? "User")
+                    };
+            Console.WriteLine(account.Role ?? "User");
             var token = new JwtSecurityToken(
                 issuer: _configuration.GetValue<string>("JwtSettings:Issuer"),
                 audience: _configuration.GetValue<string>("JwtSettings:Audience"),

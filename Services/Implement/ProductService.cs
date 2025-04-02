@@ -15,10 +15,12 @@ namespace Services.Implement
     public class ProductService : IProductService
     {
         private readonly IProductRepository _repository;
+        private readonly IHubContext<ChatHub> _hubContext;
 
-        public ProductService(IProductRepository repository)
+        public ProductService(IProductRepository repository, IHubContext<ChatHub> hubContext)
         {
             _repository = repository;
+            _hubContext = hubContext;
         }
 
         public async Task<IEnumerable<Product>> GetAllProductsAsync()
@@ -33,17 +35,23 @@ namespace Services.Implement
 
         public async Task<Product> CreateProductAsync(Product product)
         {
-            return await _repository.AddAsync(product);
+            var result = await _repository.AddAsync(product);
+            await _hubContext.Clients.All.SendAsync("ReceiveMessage");
+            return result;
         }
 
         public async Task<Product> UpdateProductAsync(Product product)
         {
-            return await _repository.UpdateAsync(product);
+            var result = await _repository.UpdateAsync(product);
+            await _hubContext.Clients.All.SendAsync("ReceiveMessage");
+            return result;
         }
 
         public async Task<bool> DeleteProductAsync(int id)
         {
-            return await _repository.DeleteAsync(id);
+            var result = await _repository.DeleteAsync(id);
+            await _hubContext.Clients.All.SendAsync("ReceiveMessage");
+            return result;
         }
         public async Task<bool> CheckProductInOrderDetailsAsync(int id)
         {

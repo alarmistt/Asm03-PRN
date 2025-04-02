@@ -1,0 +1,203 @@
+﻿@page "/register"
+@layout EmptyLayout
+@using BusinessObject.Entities
+@using Services.Interface
+@using eStore.Components.Layout
+
+@inject IMemberService MemberService
+@inject NavigationManager NavigationManager
+@inject HttpClient Http
+
+@rendermode InteractiveServer
+
+<div class="container mt-5">
+    <div class="card shadow-sm border-0 rounded" style="background-color: #f8f9fa;">
+        <div class="card-header text-white text-center py-3 rounded-top" style="background-color: #6c757d;">
+            <h3 class="mb-0">Register</h3>
+        </div>
+        <div class="card-body">
+            <EditForm Model="member" OnValidSubmit="HandleValidSubmit">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="mb-3">
+                    <label for="Email" class="form-label fw-bold">Email</label>
+                    <InputText id="Email" class="form-control" @bind-Value="member.Email" />
+                </div>
+                <div class="mb-3">
+                    <label for="CompanyName" class="form-label fw-bold">Company Name</label>
+                    <InputText id="CompanyName" class="form-control" @bind-Value="member.CompanyName" />
+                </div>
+
+                <!-- Dropdown chọn quốc gia -->
+                <div class="mb-3">
+                    <label for="Country" class="form-label fw-bold">Country</label>
+                    <select id="Country" class="form-select" @onchange="OnCountryChanged">
+                        <option value="">Select a country</option>
+                        @foreach (var country in countries)
+                        {
+                            <option value="@country.Name.Common" selected="@(member.Country == country.Name.Common)">@country.Name.Common</option>
+                        }
+                    </select>
+                </div>
+
+                <!-- Dropdown chọn tỉnh/thành phố -->
+                <div class="mb-3">
+                    <label for="City" class="form-label fw-bold">Province/City</label>
+                    <select id="City" class="form-select" @bind="member.City">
+                        <option value="">Select a province/city</option>
+                        @foreach (var city in cities)
+                        {
+                            <option value="@city">@city</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label for="Password" class="form-label fw-bold">Password</label>
+                    <InputText id="Password" class="form-control" type="password" @bind-Value="member.Password" />
+                </div>
+
+                <div class="d-flex justify-content-end">
+                    <button type="submit" class="btn btn-success me-2">
+                        <i class="bi bi-save"></i> Register
+                    </button>
+                    <button type="button" class="btn btn-danger" @onclick="Cancel">
+                        <i class="bi bi-x-circle"></i> Cancel
+                    </button>
+                </div>
+            </EditForm>
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="alert alert-danger mt-3">@errorMessage</div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private Member member = new();
+    private List<CountryData> countries = new();
+    private List<string> cities = new();
+    private string errorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCountries();
+    }
+
+    private async Task LoadCountries()
+    {
+        try
+        {
+            var response = await Http.GetFromJsonAsync<List<CountryData>>("https://restcountries.com/v3.1/all");
+            if (response != null)
+            {
+                countries = response.OrderBy(c => c.Name.Common).ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading countries: {ex.Message}");
+        }
+    }
+
+    private async Task OnCountryChanged(ChangeEventArgs e)
+    {
+        var selectedCountry = e.Value?.ToString();
+        if (!string.IsNullOrEmpty(selectedCountry))
+        {
+            member.Country = selectedCountry;
+            cities.Clear();
+            await LoadCities(selectedCountry);
+            member.City = cities.Any() ? cities.First() : string.Empty; // Gán giá trị mặc định nếu có
+        }
+        else
+        {
+            cities.Clear();
+            member.City = string.Empty;
+        }
+        StateHasChanged();
+    }
+
+    private async Task LoadCities(string? country)
+    {
+        cities.Clear();
+        if (string.IsNullOrEmpty(country)) return;
+
+        try
+        {
+            var countryData = countries.FirstOrDefault(c => c.Name.Common == country);
+            if (countryData == null || string.IsNullOrEmpty(countryData.Cca2))
+            {
+                Console.WriteLine($"No country code found for {country}");
+                return;
+            }
+
+            var apiUrl = $"http://api.geonames.org/searchJSON?country={countryData.Cca2}&featureClass=A&featureCode=ADM1&maxRows=1000&username=ngocdat0203";
+            var response = await Http.GetFromJsonAsync<CityApiResponse>(apiUrl);
+
+            if (response != null && response.Geonames != null)
+            {
+                cities = response.Geonames
+                    .Where(c => !string.IsNullOrEmpty(c.Name))
+                    .Select(c => c.Name)
+                    .OrderBy(c => c)
+                    .ToList();
+                Console.WriteLine($"Loaded {cities.Count} cities for {country}");
+            }
+            else
+            {
+                Console.WriteLine($"No cities found for {country}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading cities: {ex.Message}");
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            await MemberService.AddMember(member);
+            NavigationManager.NavigateTo("/login");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error registering member: {ex.Message}";
+            if (ex.InnerException != null)
+            {
+                errorMessage += $" Inner exception: {ex.InnerException.Message}";
+            }
+            Console.WriteLine(errorMessage);
+        }
+    }
+
+    private void Cancel()
+    {
+        NavigationManager.NavigateTo("/login");
+    }
+
+    public class CountryData
+    {
+        public CountryName Name { get; set; } = new CountryName();
+        public string Cca2 { get; set; } = string.Empty; // Mã ISO 2 chữ cái
+    }
+
+    public class CountryName
+    {
+        public string Common { get; set; } = string.Empty;
+    }
+
+    public class CityApiResponse
+    {
+        public List<CityData> Geonames { get; set; } = new List<CityData>();
+    }
+
+    public class CityData
+    {
+        public string Name { get; set; } = string.Empty;
+    }
+}

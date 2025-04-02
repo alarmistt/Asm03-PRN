@@ -21,16 +21,18 @@ namespace Services.Implement
 
         public async Task<bool> AddMember(Member member)
         {
-            bool isSuccess = await _memberRepository.AddMember(member);
-            await _hubContext.Clients.All.SendAsync("ReceiveMessage");
-            return isSuccess;
+            member.Password = this.HashPassword(member.Password);
+            return await _memberRepository.AddMember(member);
+        }
+        public string HashPassword(string password)
+        {
+            return BCrypt.Net.BCrypt.HashPassword(password);
         }
 
         public async Task<bool> UpdateMember(Member member)
         {
-            bool isSuccess = await _memberRepository.UpdateMember(member);
-            await _hubContext.Clients.All.SendAsync("ReceiveMessage");
-            return isSuccess;
+            member.Password = this.HashPassword(member.Password);
+            return await _memberRepository.UpdateMember(member);
         }
 
         public async Task<bool> DeleteMember(int memberId)
@@ -55,10 +57,6 @@ namespace Services.Implement
             return await _memberRepository.GetMembers(email, companyName, country, pageNumber, pageSize);
         }
 
-        public async Task<Member?> Login(string email, string password)
-        {
-            return await _memberRepository.Login(email, password);
-        }
 
         public async Task<Member> GetMembersByEmailAddress(string emailAddress)
         {

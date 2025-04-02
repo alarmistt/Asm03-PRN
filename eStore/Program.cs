@@ -7,15 +7,23 @@ using Services.Implement;
 using Services.Interface;
 using OfficeOpenXml;
 
+
 var builder = WebApplication.CreateBuilder(args);
+
 
 ExcelPackage.License.SetNonCommercialPersonal("ASM03");
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 builder.Services.AddBlazoredSessionStorage();
+builder.Services.AddAuthorizationCore();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminPolicy", policy => policy.RequireRole("Admin"));
+});
+builder.Services.AddServerSideBlazor();
 builder.Services.AddInfrastructure(builder.Configuration);
-builder.Services.AddAuthorization();
+
 
 builder.Services.AddServerSideBlazor();
 
@@ -46,8 +54,11 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Error", createScopeForErrors: true);    
     app.UseHsts();
 }
+
 app.MapHub<ChatHub>("/chatHub");
 app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.UseStaticFiles();
 app.UseAntiforgery();
