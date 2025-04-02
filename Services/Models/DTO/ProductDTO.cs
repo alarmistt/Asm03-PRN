@@ -11,6 +11,8 @@ namespace Services.Models.DTO
 {
     public class ProductDTO
     {
+        [Key]
+        public int ProductId { get; set; }
         [ForeignKey("Category")]
         public int CategoryId { get; set; }
 

@@ -1,6 +1,7 @@
 ﻿@page "/category/edit/{CategoryId:int?}"
 @using BusinessObject.Entities
 @using Services.Interface
+@using Services.Models.DTO
 @inject ICategoryService CategoryService
 @inject NavigationManager NavigationManager
 
@@ -48,7 +49,7 @@
     [Parameter]
     public int? CategoryId { get; set; }
 
-    private Category category = new();
+    private CategoryDTO category = new();
     private string errorMessage = string.Empty;
 
     protected override async Task OnInitializedAsync()

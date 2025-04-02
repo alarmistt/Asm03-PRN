@@ -4,6 +4,7 @@
 @inject IMemberService MemberService
 @inject NavigationManager NavigationManager
 @using Microsoft.AspNetCore.SignalR.Client
+@using Services.Models.DTO
 @inject IJSRuntime JSRuntime
 @inject JwtAuthenticationStateProvider AuthenticationStateProvider
 @rendermode InteractiveServer
@@ -121,7 +122,7 @@
 </style>
 
 @code {
-    private List<Member> members = new();
+    private List<MemberDTO> members = new();
     private string searchEmail = string.Empty;
     private string searchCompany = string.Empty;
     private string searchCity = string.Empty;

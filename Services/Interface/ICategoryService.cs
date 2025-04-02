@@ -1,5 +1,6 @@
 ﻿using BusinessObject.Entities;
 using Core;
+using Services.Models.DTO;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,14 +11,13 @@ namespace Services.Interface
 {
     public interface ICategoryService
     {
-        Task<bool> AddCategory(Category category);
-        Task<bool> UpdateCategory(Category category);
+        Task<bool> AddCategory(CategoryDTO category);
+        Task<bool> UpdateCategory(CategoryDTO category);
         Task<bool> DeleteCategory(int categoryId);
-        Task<Category> GetCategory(int categoryId);
-        Task<PaginatedList<Category>> GetCategories(string name, int pageNumber, int pageSize);
-
-
-
-        Task<IEnumerable<Category>> GetCategories();
+        Task<CategoryDTO> GetCategory(int categoryId);
+        Task<PaginatedList<CategoryDTO>> GetCategories(string name, int pageNumber, int pageSize);
+        Task<IEnumerable<CategoryDTO>> GetCategories();
     }
+
+
 }

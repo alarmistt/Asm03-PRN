@@ -7,6 +7,7 @@
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JS
 @using Microsoft.AspNetCore.SignalR.Client
+@using Services.Models.DTO
 @rendermode InteractiveServer
 
 <div class="container my-5">
@@ -296,7 +297,7 @@
 @code {
     // All the C# code remains the same
     private List<Product> filteredProducts = new();
-    private List<Category> categories = new();
+    private List<CategoryDTO> categories = new();
     private HubConnection? hubConnection;
 
     private int currentPage = 1;

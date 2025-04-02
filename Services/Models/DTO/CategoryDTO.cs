@@ -9,6 +9,9 @@ namespace Services.Models.DTO
 {
     public class CategoryDTO
     {
+        [Key]
+        public int CategoryId { get; set; }
+
         [Required, StringLength(40)]
         public string CategoryName { get; set; }
 
