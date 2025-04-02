@@ -55,9 +55,7 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Error", createScopeForErrors: true);    
     app.UseHsts();
 }
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Home}/{action=Login}/{id?}");
+
 app.MapHub<ChatHub>("/chatHub");
 app.UseHttpsRedirection();
 app.UseAuthentication();
