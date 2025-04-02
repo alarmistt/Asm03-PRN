@@ -10,9 +10,6 @@
 @rendermode InteractiveServer
 <PageTitle>Order</PageTitle>
 
-<CascadingAuthenticationState>
-    <AuthorizeView Roles="Admin,User">
-<Authorized Context="createOrderContext">
 <div class="container mt-5">
     <div class="card shadow-sm border-0 rounded bg-light">
         <div class="card-header bg-warning-subtle text-dark text-center py-3 rounded-top">
@@ -121,14 +118,7 @@
         </div>
     </div>
 </div>
-        </Authorized>
-        <NotAuthorized>
-            <div class="alert alert-danger" role="alert">
-                You are not authorized to view this page.
-            </div>
-        </NotAuthorized>
-    </AuthorizeView>
-</CascadingAuthenticationState>
+
 @code {
     private Order order = new() { OrderDetails = new List<OrderDetail>() };
     private OrderDetail newOrderDetail = new();
