@@ -1,13 +1,14 @@
 ﻿
+
 @page "/products"
 @using BusinessObject.Entities
 @using Services.Interface
+@using Services.Models.DTO
 @inject IProductService ProductService
 @inject ICategoryService CategoryService
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JS
 @using Microsoft.AspNetCore.SignalR.Client
-@using Services.Models.DTO
 @rendermode InteractiveServer
 
 <div class="container my-5">
@@ -18,7 +19,7 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <h3 class="mb-0 fw-normal">Product Management</h3>
                         <button class="btn btn-light btn-sm px-4 fw-medium shadow-sm" style="border-radius: 20px; display: flex; align-items: center; justify-content: center;" @onclick="CreateProduct">
-                            <span class="me-2">+</span> Add Product
+                            <span class="me-多元2">+</span> Add Product
                         </button>
                     </div>
                 </div>
@@ -34,7 +35,7 @@
                                        @bind="searchName" @bind:event="oninput" />
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <div class="input-group shadow-sm" style="border-radius: 20px; overflow: hidden;">
                                 <span class="input-group-text border-0" style="background-color: #f3f4f6;">
                                     <span class="dollar-icon">$</span>
@@ -43,7 +44,7 @@
                                        @bind="searchPriceText" @bind:event="oninput" />
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <div class="input-group shadow-sm" style="border-radius: 20px; overflow: hidden;">
                                 <span class="input-group-text border-0" style="background-color: #f3f4f6;">
                                     <span class="tag-icon">🏷️</span>
@@ -56,11 +57,6 @@
                                     }
                                 </select>
                             </div>
-                        </div>
-                        <div class="col-md-2">
-                            <button class="btn w-100 fw-medium shadow-sm" style="background-color: #4B5EAA; color: white; border-radius: 20px; display: flex; align-items: center; justify-content: center;" @onclick="ResetFilters">
-                                <span class="reset-icon me-2">↺</span> Reset
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -97,7 +93,7 @@
                                     {
                                         <tr class="table-row">
                                             <td class="fw-medium" style="color: #4B5EAA;">@product.ProductId</td>
-                                            <td>@categories.FirstOrDefault(c => c.CategoryId == product.CategoryId)?.CategoryName</td>
+                                            <td>@product.Category?.CategoryName</td>
                                             <td>@product.ProductName</td>
                                             <td>@product.Weight</td>
                                             <td style="color: #16a34a; font-weight: 500;">@product.UnitPrice.ToString("C")</td>
@@ -127,10 +123,10 @@
                                 Showing @((currentPage - 1) * pageSize + 1) to @(Math.Min(currentPage * pageSize, totalCount)) of @totalCount products
                             </div>
                             <nav>
-                                <ul class="pagination mb-0">
+                                <ul class="pagination mb-0 custom-pagination">
                                     <li class="page-item @(currentPage == 1 ? "disabled" : "")">
                                         <button class="page-link" @onclick="() => ChangePage(currentPage - 1)">
-                                            &larr;
+                                            <i class="fas fa-chevron-left"></i>
                                         </button>
                                     </li>
                                     @foreach (var pageNumber in GetPageNumbers())
@@ -150,7 +146,7 @@
                                     }
                                     <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
                                         <button class="page-link" @onclick="() => ChangePage(currentPage + 1)">
-                                            &rarr;
+                                            <i class="fas fa-chevron-right"></i>
                                         </button>
                                     </li>
                                 </ul>
@@ -199,6 +195,9 @@
     </div>
 }
 
+<!-- Include FontAwesome for pagination icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2Lw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
 <style>
     .table-row:hover {
         background-color: #f9fafb;
@@ -236,67 +235,54 @@
         border: none;
     }
 
-    /* Pagination Styles */
-    .pagination {
-        gap: 8px;
-        align-items: center;
+    .custom-pagination .page-item {
+        margin: 0 5px;
     }
 
-    .page-item {
-        margin: 0;
-    }
-
-    .page-link {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
+    .custom-pagination .page-link {
+        border-radius: 50% !important;
+        border: 1px solid #d1d5db;
+        color: #4B5EAA;
         background-color: #ffffff;
-        color: #6b7280;
+        padding: 8px 14px;
         font-weight: 500;
-        font-size: 14px;
-        border: none;
-        transition: all 0.2s ease;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
     }
 
-        .page-link:hover:not(.disabled .page-link) {
-            background-color: #e5e7eb;
-            color: #4B5EAA;
+        .custom-pagination .page-link:hover {
+            background-color: #4B5EAA;
+            color: #ffffff;
+            border-color: #4B5EAA;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
         }
 
-    .page-item.active .page-link {
-        background-color: #4B5EAA;
+    .custom-pagination .page-item.active .page-link {
+        background: linear-gradient(135deg, #4B5EAA, #6B7280);
         color: #ffffff;
+        border-color: #4B5EAA;
     }
 
-    .page-item.disabled .page-link {
+    .custom-pagination .page-item.disabled .page-link {
         background-color: #f3f4f6;
-        color: #d1d5db;
+        color: #9ca3af;
+        border-color: #d1d5db;
         cursor: not-allowed;
+        box-shadow: none;
     }
 
-    .page-item:first-child .page-link {
-        border-top-left-radius: 50%;
-        border-bottom-left-radius: 50%;
-    }
-
-    .page-item:last-child .page-link {
-        border-top-right-radius: 50%;
-        border-bottom-right-radius: 50%;
+    .custom-pagination .page-link i {
+        font-size: 14px;
     }
 
     .col-xl-10 {
         flex: 0 0 auto;
         width: 100%;
     }
-
 </style>
 
 @code {
-    // All the C# code remains the same
-    private List<Product> filteredProducts = new();
+    private List<ProductDTO> filteredProducts = new();
     private List<CategoryDTO> categories = new();
     private HubConnection? hubConnection;
 
@@ -396,15 +382,6 @@
         }
     }
 
-    private void ResetFilters()
-    {
-        _searchName = "";
-        _searchPriceText = "";
-        _selectedCategoryId = 0;
-        currentPage = 1;
-        _ = LoadProducts();
-    }
-
     private void CreateProduct()
     {
         NavigationManager.NavigateTo("/product/addnew");
@@ -483,7 +460,7 @@
             if (currentPage > 3)
             {
                 pages.Add(1);
-                pages.Add(-1); // Dấu "..."
+                pages.Add(-1);
             }
 
             int start = Math.Max(1, currentPage - 2);
@@ -495,7 +472,7 @@
 
             if (currentPage < totalPages - 2)
             {
-                pages.Add(-1); // Dấu "..."
+                pages.Add(-1);
                 pages.Add(totalPages);
             }
         }

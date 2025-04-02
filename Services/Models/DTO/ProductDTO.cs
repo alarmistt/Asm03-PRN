@@ -28,6 +28,6 @@ namespace Services.Models.DTO
         [Required, Range(0, int.MaxValue)]
         public int UnitsInStock { get; set; }
 
-        public Category Category { get; set; }
+        public CategoryDTO Category { get; set; }
     }
 }
