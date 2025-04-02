@@ -32,6 +32,7 @@ namespace Services.Implement
         public async Task<bool> UpdateMember(Member member)
         {
             member.Password = this.HashPassword(member.Password);
+            await _hubContext.Clients.All.SendAsync("ReceiveMessage");
             return await _memberRepository.UpdateMember(member);
         }
 

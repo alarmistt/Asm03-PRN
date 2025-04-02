@@ -1,35 +1,44 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿<div class="top-row ps-3 navbar navbar-dark bg-primary shadow-lg">
     <div class="container-fluid">
-        <a class="navbar-brand" href="">eStore</a>
+        <a class="navbar-brand text-white fw-bold" href="/">eStore</a>
+        <label for="nav-toggle" class="navbar-toggler p-2">
+            <span class="navbar-toggler-icon"></span>
+        </label>
     </div>
 </div>
 
-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+<input type="checkbox" title="Navigation menu" class="d-none" id="nav-toggle" />
 
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
+<div class="nav-scrollable bg-light shadow" onclick="document.querySelector('#nav-toggle').click()">
+    <nav class="d-flex flex-column p-3">
+        <div class="nav-item py-2">
+            <NavLink class="nav-link d-flex align-items-center text-dark" href="" Match="NavLinkMatch.All">
+                <i class="fas fa-home me-2"></i> Home
             </NavLink>
         </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
+        <div class="nav-item py-2">
+            <NavLink class="nav-link d-flex align-items-center text-dark" href="categories">
+                <i class="fas fa-th-large me-2"></i> Categories
             </NavLink>
         </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
+        <div class="nav-item py-2">
+            <NavLink class="nav-link d-flex align-items-center text-dark" href="members">
+                <i class="fas fa-users me-2"></i> Members
             </NavLink>
         </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="sales-report">
-                <span class="oi oi-bar-chart" aria-hidden="true"></span> Sales Report
+        <div class="nav-item py-2">
+            <NavLink class="nav-link d-flex align-items-center text-dark" href="products">
+                <i class="fas fa-box me-2"></i> Products
+            </NavLink>
+        </div>
+        <div class="nav-item py-2">
+            <NavLink class="nav-link d-flex align-items-center text-dark" href="sales-report">
+                <i class="fas fa-chart-bar me-2"></i> Sales Report
             </NavLink>
         </div>
     </nav>
 </div>
+
+<!-- Add Font Awesome Icons Library -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
