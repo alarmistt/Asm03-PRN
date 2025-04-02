@@ -45,7 +45,7 @@
 
                 <div class="mb-4">
                     <label for="Weight" class="form-label fw-medium text-muted">Weight</label>
-                    <InputText id="Weight" class="form-control shadow-sm" @bind-Value="product.Weight" @oninput="ValidateWeight" style="border-radius: 8px;" />
+                    <InputText id="Weight" class="form-control shadow-sm" @bind-Value="product.Weight"  style="border-radius: 8px;" />
                     <ValidationMessage For="@(() => product.Weight)" class="text-danger" />
                     @if (!string.IsNullOrEmpty(weightError))
                     {
@@ -169,23 +169,6 @@
         StateHasChanged();
     }
 
-    private void ValidateWeight(ChangeEventArgs e)
-    {
-        string value = e.Value?.ToString() ?? "";
-        if (string.IsNullOrEmpty(value))
-        {
-            weightError = "Weight cannot be empty.";
-        }
-        else if (!decimal.TryParse(value, out decimal weight) || weight <= 0)
-        {
-            weightError = "Weight must be a valid number greater than 0.";
-        }
-        else
-        {
-            weightError = "";
-        }
-        StateHasChanged();
-    }
 
     private void ValidateUnitPrice(ChangeEventArgs e)
     {
@@ -224,11 +207,6 @@
             if (string.IsNullOrEmpty(product.Weight))
             {
                 weightError = "Weight cannot be empty.";
-                return;
-            }
-            if (!decimal.TryParse(product.Weight, out decimal weight) || weight <= 0)
-            {
-                weightError = "Weight must be a valid number greater than 0.";
                 return;
             }
             if (product.UnitPrice < 1)
