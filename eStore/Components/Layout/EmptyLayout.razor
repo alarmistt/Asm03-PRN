@@ -1,14 +1,5 @@
 ﻿@inherits LayoutComponentBase
 @inject JwtAuthenticationStateProvider AuthStateProvider
-@code {
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            await AuthStateProvider.Initialize();
-        }
-    }
-}
 
 <div class="page">
     <main>

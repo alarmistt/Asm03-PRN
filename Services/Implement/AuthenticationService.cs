@@ -1,5 +1,7 @@
-﻿using BusinessObject.Entities;
+﻿using Blazored.SessionStorage;
+using BusinessObject.Entities;
 using DataAccess.Interface;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using Services.Interface;
@@ -44,7 +46,11 @@ namespace Services.Implement
             return BCrypt.Net.BCrypt.Verify(password, hashedPassword);
         }
 
-  
+        public async Task LogoutAsync()
+        {
+            await _authStateProvider.LogoutAsync();
+        }
+
         public string GenerateJwtToken(Member account)
         {
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration.GetValue<string>("JwtSettings:SecretKey")!));
@@ -60,7 +66,7 @@ namespace Services.Implement
                 issuer: _configuration.GetValue<string>("JwtSettings:Issuer"),
                 audience: _configuration.GetValue<string>("JwtSettings:Audience"),
                 claims: claims,
-                expires: DateTime.UtcNow.AddHours(1),
+                expires: DateTime.UtcNow.AddMinutes(1),
                 signingCredentials: creds
             );
 
