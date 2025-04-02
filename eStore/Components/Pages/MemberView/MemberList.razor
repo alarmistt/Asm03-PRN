@@ -5,7 +5,7 @@
 @inject NavigationManager NavigationManager
 @using Microsoft.AspNetCore.SignalR.Client
 @inject IJSRuntime JSRuntime
-
+@inject JwtAuthenticationStateProvider AuthenticationStateProvider
 @rendermode InteractiveServer
 
 <CascadingAuthenticationState>
@@ -244,6 +244,13 @@
         if (hubConnection is not null)
         {
             await hubConnection.DisposeAsync();
+        }
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            AuthenticationStateProvider.SetPrerendering(false);
         }
     }
 }
