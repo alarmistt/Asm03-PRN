@@ -215,14 +215,25 @@
             var response = await Http.GetFromJsonAsync<List<CountryData>>("https://restcountries.com/v3.1/all");
             if (response != null)
             {
-                countries = response.OrderBy(c => c.Name.Common).ToList();
+                countries = response
+                    .Where(c => c.Name != null && !string.IsNullOrEmpty(c.Name.Common) && !string.IsNullOrEmpty(c.Cca2))
+                    .OrderBy(c => c.Name.Common)
+                    .ToList();
+                Console.WriteLine($"Loaded {countries.Count} countries");
+            }
+            else
+            {
+                errorMessage = "No countries found in the response.";
+                Console.WriteLine(errorMessage);
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error loading countries: {ex.Message}");
+            errorMessage = $"Error loading countries: {ex.Message}";
+            Console.WriteLine(errorMessage);
         }
     }
+
 
     private async Task OnCountryChanged(ChangeEventArgs e)
     {
@@ -249,10 +260,11 @@
 
         try
         {
-            var countryData = countries.FirstOrDefault(c => c.Name.Common == country);
+            var countryData = countries.FirstOrDefault(c => string.Equals(c.Name.Common, country, StringComparison.OrdinalIgnoreCase));
             if (countryData == null || string.IsNullOrEmpty(countryData.Cca2))
             {
-                Console.WriteLine($"No country code found for {country}");
+                errorMessage = $"No country code found for {country}";
+                Console.WriteLine(errorMessage);
                 return;
             }
 
@@ -266,11 +278,18 @@
                     .Select(c => c.Name)
                     .OrderBy(c => c)
                     .ToList();
+                Console.WriteLine($"Loaded {cities.Count} cities for {country}");
+            }
+            else
+            {
+                errorMessage = $"No cities found for {country}";
+                Console.WriteLine(errorMessage);
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error loading cities: {ex.Message}");
+            errorMessage = $"Error loading cities: {ex.Message}";
+            Console.WriteLine(errorMessage);
         }
     }
 
