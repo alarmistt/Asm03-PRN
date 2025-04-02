@@ -24,6 +24,7 @@ namespace BusinessObject.Entities
 
         [Required]
         public string Password { get; set; }
+        public DateTimeOffset? DeletedDate { get; set; } = null;
 
         public ICollection<Order> Orders { get; set; }
     }

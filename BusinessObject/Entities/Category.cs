@@ -14,9 +14,6 @@ namespace BusinessObject.Entities
 
         public ICollection<Product> Products { get; set; }
 
-        public static implicit operator bool(Category v)
-        {
-            throw new NotImplementedException();
-        }
+        public DateTimeOffset? DeletedDate { get; set; } = null;
     }
 }

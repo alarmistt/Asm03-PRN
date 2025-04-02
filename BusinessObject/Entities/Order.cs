@@ -24,6 +24,8 @@ namespace  BusinessObject.Entities
 
         public Member Member { get; set; }
 
+        public DateTimeOffset? DeletedDate { get; set; } = null;
+
         [RegularExpression("^(Pending|Processing|Completed|Cancelled)$", ErrorMessage = "Status must be Pending, Processing, Completed, or Cancelled")]
         public string Status { get; set; } = "Pending";
         public ICollection<OrderDetail> OrderDetails { get; set; }

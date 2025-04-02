@@ -19,7 +19,7 @@ namespace BusinessObject.Entities
 
         [Required, Range(0, 1)]
         public float Discount { get; set; }
-
+        public DateTimeOffset? DeletedDate { get; set; } = null;
         public Order Order { get; set; }
         public Product Product { get; set; }
     }
