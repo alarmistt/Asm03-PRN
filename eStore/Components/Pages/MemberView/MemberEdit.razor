@@ -1,6 +1,7 @@
 ﻿@page "/member/edit/{MemberId:int?}"
 @using BusinessObject.Entities
 @using Services.Interface
+@using Services.Models.DTO
 @inject IMemberService MemberService
 @inject NavigationManager NavigationManager
 @inject HttpClient Http
@@ -86,7 +87,7 @@
     [Parameter]
     public int? MemberId { get; set; }
 
-    private Member member = new();
+    private MemberDTO member = new();
     private List<CountryData> countries = new();
     private List<string> cities = new();
     private string errorMessage = string.Empty;

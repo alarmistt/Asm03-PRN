@@ -1,6 +1,7 @@
 ﻿@page "/product/addnew"
 @using BusinessObject.Entities
 @using Services.Interface
+@using Services.Models.DTO
 @inject IProductService ProductService
 @inject ICategoryService CategoryService
 @inject NavigationManager NavigationManager
@@ -126,7 +127,7 @@
 
 @code {
     private Product product = new Product();
-    private List<Category> categories = new();
+    private List<CategoryDTO> categories = new();
     private string errorMessage = "";
     private string categoryError = "";
     private string productNameError = "";

@@ -9,6 +9,9 @@ namespace Services.Models.DTO
 {
     public class MemberDTO
     {
+
+        [Key]
+        public int MemberId { get; set; }
         [Required]
         public string Email { get; set; }
 

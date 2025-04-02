@@ -6,6 +6,7 @@
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JS
 @using Microsoft.AspNetCore.SignalR.Client
+@using Services.Models.DTO
 @rendermode InteractiveServer
 
 <div class="container-fluid my-5 px-4">
@@ -200,7 +201,7 @@
 @code {
     private List<Product> products = new();
     private List<Product> filteredProducts = new();
-    private List<Category> categories = new();
+    private List<CategoryDTO> categories = new();
     private HubConnection? hubConnection;
 
     // Two-way binding properties with automatic filtering

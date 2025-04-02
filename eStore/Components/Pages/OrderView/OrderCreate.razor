@@ -1,6 +1,7 @@
 ﻿@page "/order/create"
 @using BusinessObject.Entities
 @using Services.Interface
+@using Services.Models.DTO
 @inject IOrderService OrderService
 @inject IMemberService MemberService
 @inject IProductService ProductService
@@ -132,7 +133,7 @@
 @code {
     private Order order = new() { OrderDetails = new List<OrderDetail>() };
     private OrderDetail newOrderDetail = new();
-    private List<Member> Members = new();
+    private List<MemberDTO> Members = new();
     private List<Product> Products = new();
     private List<OrderDetail> TempOrderDetails = new();
     private string errorMessage = string.Empty;

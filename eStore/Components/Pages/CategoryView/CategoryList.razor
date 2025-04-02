@@ -4,6 +4,7 @@
 @inject ICategoryService CategoryService
 @inject NavigationManager NavigationManager
 @using Microsoft.AspNetCore.SignalR.Client
+@using Services.Models.DTO
 @inject IJSRuntime JSRuntime
 @rendermode InteractiveServer
 
@@ -80,6 +81,9 @@
                         Next
                     </button>
                 </div>
+                <div class="text-center mt-2">
+                    <span>Total Pages: @totalPages</span>
+                </div>
             }
         </div>
     </div>
@@ -107,7 +111,7 @@
 </style>
 
 @code {
-    private List<Category> categories = new();
+    private List<CategoryDTO> categories = new();
     private string searchTerm = string.Empty;
     private int currentPage = 1;
     private int totalPages = 1;
@@ -128,12 +132,12 @@
     {
         try
         {
-             await InvokeAsync(async () =>
-            {
-            var paginatedList = await CategoryService.GetCategories(searchTerm, currentPage, pageSize);
-            categories = paginatedList.Items.ToList();
-            totalPages = paginatedList.TotalPages;
-            StateHasChanged();
+            await InvokeAsync(async () =>
+           {
+               var paginatedList = await CategoryService.GetCategories(searchTerm, currentPage, pageSize);
+               categories = paginatedList.Items.ToList();
+               totalPages = paginatedList.TotalPages;
+               StateHasChanged();
            });
         }
         catch (Exception ex)
@@ -226,4 +230,3 @@
         }
     }
 }
-

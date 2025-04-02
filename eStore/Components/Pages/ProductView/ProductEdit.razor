@@ -1,6 +1,7 @@
 ﻿@page "/product/edit/{ProductId:int?}"
 @using BusinessObject.Entities
 @using Services.Interface
+@using Services.Models.DTO
 @inject IProductService ProductService
 @inject ICategoryService CategoryService
 @inject NavigationManager NavigationManager
@@ -129,7 +130,7 @@
     public int? ProductId { get; set; }
 
     private Product product = new();
-    private List<Category> categories = new();
+    private List<CategoryDTO> categories = new();
     private string errorMessage = "";
     private string categoryError = "";
     private string productNameError = "";
