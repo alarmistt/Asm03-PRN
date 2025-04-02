@@ -1,4 +1,4 @@
-﻿using BusinessObject.Base;
+﻿using DataAccess.Base;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;

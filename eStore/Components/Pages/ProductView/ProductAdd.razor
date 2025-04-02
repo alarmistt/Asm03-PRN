@@ -259,11 +259,5 @@
     {
         NavigationManager.NavigateTo("/products");
     }
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            AuthenticationStateProvider.SetPrerendering(false);
-        }
-    }
+
 }

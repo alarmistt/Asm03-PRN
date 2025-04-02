@@ -46,11 +46,7 @@ namespace Services.Implement
             return BCrypt.Net.BCrypt.Verify(password, hashedPassword);
         }
 
-        public async Task LogoutAsync()
-        {
-            await _authStateProvider.LogoutAsync();
-        }
-
+  
         public string GenerateJwtToken(Member account)
         {
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration.GetValue<string>("JwtSettings:SecretKey")!));
