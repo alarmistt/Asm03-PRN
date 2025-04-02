@@ -11,131 +11,131 @@
 
 <style>
     * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-        font-family: "Open Sans", sans-serif;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Open Sans", sans-serif;
     }
 
     body {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 100vh;
-        width: 100%;
-        padding: 0 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    width: 100%;
+    padding: 0 10px;
     }
 
-        body::before {
-            content: "";
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            background: url('https://res.cloudinary.com/dk3yac2ie/image/upload/v1743618955/asset/byvor7lwywqcuqdbdmcv.jpg'), #000;
-            background-position: center;
-            background-size: cover;
-            filter: brightness(50%);
-        }
+    body::before {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: url('https://res.cloudinary.com/dk3yac2ie/image/upload/v1743618955/asset/byvor7lwywqcuqdbdmcv.jpg'), #000;
+    background-position: center;
+    background-size: cover;
+    filter: brightness(50%);
+    }
 
     .wrapper {
-        width: 450px;
-        border-radius: 8px;
-        padding: 30px;
-        text-align: center;
-        border: 1px solid rgba(255, 255, 255, 0.5);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        background-color: rgba(0, 0, 0, 0.6);
+    width: 450px;
+    border-radius: 8px;
+    padding: 30px;
+    text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    background-color: rgba(0, 0, 0, 0.6);
     }
 
     form {
-        display: flex;
-        flex-direction: column;
+    display: flex;
+    flex-direction: column;
     }
 
     h2 {
-        font-size: 2rem;
-        margin-bottom: 20px;
-        color: #fff;
+    font-size: 2rem;
+    margin-bottom: 20px;
+    color: #fff;
     }
 
     .input-field {
-        position: relative;
-        border-bottom: 2px solid #ccc;
-        margin: 15px 0;
+    position: relative;
+    border-bottom: 2px solid #ccc;
+    margin: 15px 0;
     }
 
-        .input-field label {
-            position: absolute;
-            top: 50%;
-            left: 0;
-            transform: translateY(-50%);
-            color: #fff;
-            font-size: 16px;
-            pointer-events: none;
-            transition: 0.15s ease;
-        }
+    .input-field label {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+    color: #fff;
+    font-size: 16px;
+    pointer-events: none;
+    transition: 0.15s ease;
+    }
 
-        .input-field input,
-        .input-field select {
-            width: 100%;
-            height: 40px;
-            background: transparent;
-            border: none;
-            outline: none;
-            font-size: 16px;
-            color: #fff;
-            padding-right: 20px; /* Để tránh mũi tên dropdown che chữ */
-        }
+    .input-field input,
+    .input-field select {
+    width: 100%;
+    height: 40px;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-size: 16px;
+    color: #fff;
+    padding-right: 20px; /* Để tránh mũi tên dropdown che chữ */
+    }
 
-            /* Đẩy label lên khi input hoặc select có giá trị hoặc được focus */
-            .input-field input:focus ~ label,
-            .input-field input:valid ~ label,
-            .input-field select:focus ~ label,
-            .input-field select.has-value ~ label {
-                font-size: 0.8rem;
-                top: 10px;
-                transform: translateY(-120%);
-            }
+    /* Đẩy label lên khi input hoặc select có giá trị hoặc được focus */
+    .input-field input:focus ~ label,
+    .input-field input:valid ~ label,
+    .input-field select:focus ~ label,
+    .input-field select.has-value ~ label {
+    font-size: 0.8rem;
+    top: 10px;
+    transform: translateY(-120%);
+    }
 
-        /* Tùy chỉnh dropdown */
-        .input-field select {
-            appearance: none; /* Loại bỏ kiểu mặc định của trình duyệt */
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            background: url('data:image/svg+xml;utf8,<svg fill="white" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>') no-repeat right center;
-            background-size: 16px;
-        }
+    /* Tùy chỉnh dropdown */
+    .input-field select {
+    appearance: none; /* Loại bỏ kiểu mặc định của trình duyệt */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background: url('data:image/svg+xml;utf8,<svg fill="white" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>') no-repeat right center;
+    background-size: 16px;
+    }
 
-            /* Đảm bảo chữ trong option có màu đen trên nền trắng */
-            .input-field select option {
-                color: #000;
-                background: #fff;
-            }
+    /* Đảm bảo chữ trong option có màu đen trên nền trắng */
+    .input-field select option {
+    color: #000;
+    background: #fff;
+    }
 
     button {
-        background: #fff;
-        color: #000;
-        font-weight: 600;
-        border: none;
-        padding: 12px 20px;
-        cursor: pointer;
-        border-radius: 3px;
-        font-size: 16px;
-        margin: 10px 5px;
-        border: 2px solid transparent;
-        transition: 0.3s ease;
+    background: #fff;
+    color: #000;
+    font-weight: 600;
+    border: none;
+    padding: 12px 20px;
+    cursor: pointer;
+    border-radius: 3px;
+    font-size: 16px;
+    margin: 10px 5px;
+    border: 2px solid transparent;
+    transition: 0.3s ease;
     }
 
-        button:hover {
-            color: #fff;
-            border-color: #fff;
-            background: rgba(255, 255, 255, 0.15);
-        }
+    button:hover {
+    color: #fff;
+    border-color: #fff;
+    background: rgba(255, 255, 255, 0.15);
+    }
 
     .error-message {
-        color: #ff4d4d;
-        margin-bottom: 15px;
+    color: #ff4d4d;
+    margin-bottom: 15px;
     }
 </style>
 
@@ -170,7 +170,7 @@
                         <option value="@country.Name.Common" selected="@(member.Country == country.Name.Common)">@country.Name.Common</option>
                     }
                 </select>
-                
+
             </div>
 
             <div class="input-field">
@@ -181,7 +181,7 @@
                         <option value="@city">@city</option>
                     }
                 </select>
-               
+
             </div>
 
             <div class="input-field">
@@ -202,6 +202,7 @@
     private List<CountryData> countries = new();
     private List<string> cities = new();
     private string errorMessage = string.Empty;
+    private string GeoNamesUsername = "ngocdat0203";
 
     protected override async Task OnInitializedAsync()
     {
@@ -212,25 +213,24 @@
     {
         try
         {
-            var response = await Http.GetFromJsonAsync<List<CountryData>>("https://restcountries.com/v3.1/all");
-            if (response != null)
+            var apiUrl = $"http://api.geonames.org/countryInfoJSON?username={GeoNamesUsername}";
+            var response = await Http.GetFromJsonAsync<CountryApiResponse>(apiUrl);
+
+            if (response?.Geonames != null)
             {
-                countries = response
-                    .Where(c => c.Name != null && !string.IsNullOrEmpty(c.Name.Common) && !string.IsNullOrEmpty(c.Cca2))
+                countries = response.Geonames
+                    .Select(c => new CountryData { Name = new CountryName { Common = c.CountryName }, Cca2 = c.CountryCode })
                     .OrderBy(c => c.Name.Common)
                     .ToList();
-                Console.WriteLine($"Loaded {countries.Count} countries");
             }
             else
             {
                 errorMessage = "No countries found in the response.";
-                Console.WriteLine(errorMessage);
             }
         }
         catch (Exception ex)
         {
             errorMessage = $"Error loading countries: {ex.Message}";
-            Console.WriteLine(errorMessage);
         }
     }
 
@@ -268,7 +268,7 @@
                 return;
             }
 
-            var apiUrl = $"http://api.geonames.org/searchJSON?country={countryData.Cca2}&featureClass=A&featureCode=ADM1&maxRows=1000&username=ngocdat0203";
+            var apiUrl = $"http://api.geonames.org/searchJSON?country={countryData.Cca2}&featureClass=A&featureCode=ADM1&maxRows=1000&username={GeoNamesUsername}";
             var response = await Http.GetFromJsonAsync<CityApiResponse>(apiUrl);
 
             if (response != null && response.Geonames != null)
@@ -316,6 +316,15 @@
         NavigationManager.NavigateTo("/login");
     }
 
+    public class CountryApiResponse
+    {
+        public List<Geoname> Geonames { get; set; } = new List<Geoname>();
+    }
+    public class Geoname
+    {
+        public string CountryName { get; set; } = string.Empty;
+        public string CountryCode { get; set; } = string.Empty;
+    }
     public class CountryData
     {
         public CountryName Name { get; set; } = new CountryName();
