@@ -6,6 +6,9 @@
 
 @rendermode InteractiveServer
 
+<CascadingAuthenticationState>
+<AuthorizeView Roles="Admin">
+        <Authorized Context="CateContext">
 <div class="container my-5">
     <div class="card shadow-lg border-0 rounded-3" style="background-color: #ffffff; max-width: 600px; margin: 0 auto;">
         <div class="card-header text-white text-center py-4 rounded-top-3" style="background: linear-gradient(135deg, #4a90e2, #50b5e9);">
@@ -43,6 +46,14 @@
         </div>
     </div>
 </div>
+        </Authorized>
+        <NotAuthorized>
+            <div class="alert alert-danger" role="alert">
+                You are not authorized to view this page.
+            </div>
+        </NotAuthorized>
+    </AuthorizeView>
+</CascadingAuthenticationState>
 
 @code {
     [Parameter]

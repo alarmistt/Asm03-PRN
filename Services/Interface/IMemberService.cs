@@ -15,7 +15,6 @@ namespace Services.Interface
         Task<PaginatedList<Member>> GetMembers(string email, string companyName, string country, int pageNumber, int pageSize);
 
         Task<IEnumerable<Member>> GetMembers();
-        Task<Member?> Login(string email, string password);
         Task<Member> GetMembersByEmailAddress(string emailAddress);
     }
 }
