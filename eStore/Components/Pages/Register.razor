@@ -4,76 +4,197 @@
 @using Services.Interface
 @using Services.Models.DTO
 @using eStore.Components.Layout
-
 @inject IMemberService MemberService
 @inject NavigationManager NavigationManager
 @inject HttpClient Http
-
 @rendermode InteractiveServer
 
-<div class="container mt-5">
-    <div class="card shadow-sm border-0 rounded" style="background-color: #f8f9fa;">
-        <div class="card-header text-white text-center py-3 rounded-top" style="background-color: #6c757d;">
-            <h3 class="mb-0">Register</h3>
-        </div>
-        <div class="card-body">
-            <EditForm Model="member" OnValidSubmit="HandleValidSubmit">
-                <DataAnnotationsValidator />
-                <ValidationSummary />
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Open Sans", sans-serif;
+    }
 
-                <div class="mb-3">
-                    <label for="Email" class="form-label fw-bold">Email</label>
-                    <InputText id="Email" class="form-control" @bind-Value="member.Email" />
-                </div>
-                <div class="mb-3">
-                    <label for="CompanyName" class="form-label fw-bold">Company Name</label>
-                    <InputText id="CompanyName" class="form-control" @bind-Value="member.CompanyName" />
-                </div>
+    body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        width: 100%;
+        padding: 0 10px;
+    }
 
-                <!-- Dropdown chọn quốc gia -->
-                <div class="mb-3">
-                    <label for="Country" class="form-label fw-bold">Country</label>
-                    <select id="Country" class="form-select" @onchange="OnCountryChanged">
-                        <option value="">Select a country</option>
-                        @foreach (var country in countries)
-                        {
-                            <option value="@country.Name.Common" selected="@(member.Country == country.Name.Common)">@country.Name.Common</option>
-                        }
-                    </select>
-                </div>
+        body::before {
+            content: "";
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: url('https://res.cloudinary.com/dk3yac2ie/image/upload/v1743618955/asset/byvor7lwywqcuqdbdmcv.jpg'), #000;
+            background-position: center;
+            background-size: cover;
+            filter: brightness(50%);
+        }
 
-                <!-- Dropdown chọn tỉnh/thành phố -->
-                <div class="mb-3">
-                    <label for="City" class="form-label fw-bold">Province/City</label>
-                    <select id="City" class="form-select" @bind="member.City">
-                        <option value="">Select a province/city</option>
-                        @foreach (var city in cities)
-                        {
-                            <option value="@city">@city</option>
-                        }
-                    </select>
-                </div>
+    .wrapper {
+        width: 450px;
+        border-radius: 8px;
+        padding: 30px;
+        text-align: center;
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        background-color: rgba(0, 0, 0, 0.6);
+    }
 
-                <div class="mb-3">
-                    <label for="Password" class="form-label fw-bold">Password</label>
-                    <InputText id="Password" class="form-control" type="password" @bind-Value="member.Password" />
-                </div>
+    form {
+        display: flex;
+        flex-direction: column;
+    }
 
-                <div class="d-flex justify-content-end">
-                    <button type="submit" class="btn btn-success me-2">
-                        <i class="bi bi-save"></i> Register
-                    </button>
-                    <button type="button" class="btn btn-danger" @onclick="Cancel">
-                        <i class="bi bi-x-circle"></i> Cancel
-                    </button>
-                </div>
-            </EditForm>
-            @if (!string.IsNullOrEmpty(errorMessage))
-            {
-                <div class="alert alert-danger mt-3">@errorMessage</div>
+    h2 {
+        font-size: 2rem;
+        margin-bottom: 20px;
+        color: #fff;
+    }
+
+    .input-field {
+        position: relative;
+        border-bottom: 2px solid #ccc;
+        margin: 15px 0;
+    }
+
+        .input-field label {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+            color: #fff;
+            font-size: 16px;
+            pointer-events: none;
+            transition: 0.15s ease;
+        }
+
+        .input-field input,
+        .input-field select {
+            width: 100%;
+            height: 40px;
+            background: transparent;
+            border: none;
+            outline: none;
+            font-size: 16px;
+            color: #fff;
+            padding-right: 20px; /* Để tránh mũi tên dropdown che chữ */
+        }
+
+            /* Đẩy label lên khi input hoặc select có giá trị hoặc được focus */
+            .input-field input:focus ~ label,
+            .input-field input:valid ~ label,
+            .input-field select:focus ~ label,
+            .input-field select.has-value ~ label {
+                font-size: 0.8rem;
+                top: 10px;
+                transform: translateY(-120%);
             }
-        </div>
-    </div>
+
+        /* Tùy chỉnh dropdown */
+        .input-field select {
+            appearance: none; /* Loại bỏ kiểu mặc định của trình duyệt */
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background: url('data:image/svg+xml;utf8,<svg fill="white" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>') no-repeat right center;
+            background-size: 16px;
+        }
+
+            /* Đảm bảo chữ trong option có màu đen trên nền trắng */
+            .input-field select option {
+                color: #000;
+                background: #fff;
+            }
+
+    button {
+        background: #fff;
+        color: #000;
+        font-weight: 600;
+        border: none;
+        padding: 12px 20px;
+        cursor: pointer;
+        border-radius: 3px;
+        font-size: 16px;
+        margin: 10px 5px;
+        border: 2px solid transparent;
+        transition: 0.3s ease;
+    }
+
+        button:hover {
+            color: #fff;
+            border-color: #fff;
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+    .error-message {
+        color: #ff4d4d;
+        margin-bottom: 15px;
+    }
+</style>
+
+<div class="wrapper">
+    <form>
+        <h2>Register</h2>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <p class="error-message">@errorMessage</p>
+        }
+
+        <EditForm Model="member" OnValidSubmit="HandleValidSubmit">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="input-field">
+                <InputText id="Email" @bind-Value="member.Email" required />
+                <label for="Email">Enter your email</label>
+            </div>
+
+            <div class="input-field">
+                <InputText id="CompanyName" @bind-Value="member.CompanyName" required />
+                <label for="CompanyName">Enter your company name</label>
+            </div>
+
+            <div class="input-field">
+                <select id="Country" @onchange="OnCountryChanged" class="@(string.IsNullOrEmpty(member.Country) ? "" : "has-value")" required>
+                    <option value="">Select a country</option>
+                    @foreach (var country in countries)
+                    {
+                        <option value="@country.Name.Common" selected="@(member.Country == country.Name.Common)">@country.Name.Common</option>
+                    }
+                </select>
+                
+            </div>
+
+            <div class="input-field">
+                <select id="City" @bind="member.City" class="@(string.IsNullOrEmpty(member.City) ? "" : "has-value")" required>
+                    <option value="">Select a province/city</option>
+                    @foreach (var city in cities)
+                    {
+                        <option value="@city">@city</option>
+                    }
+                </select>
+               
+            </div>
+
+            <div class="input-field">
+                <InputText id="Password" type="password" @bind-Value="member.Password" required />
+                <label for="Password">Enter your password</label>
+            </div>
+
+            <div>
+                <button type="submit">Register</button>
+                <button type="button" @onclick="Cancel">Cancel</button>
+            </div>
+        </EditForm>
+    </form>
 </div>
 
 @code {
@@ -111,7 +232,7 @@
             member.Country = selectedCountry;
             cities.Clear();
             await LoadCities(selectedCountry);
-            member.City = cities.Any() ? cities.First() : string.Empty; // Gán giá trị mặc định nếu có
+            member.City = cities.Any() ? cities.First() : string.Empty;
         }
         else
         {
@@ -145,11 +266,6 @@
                     .Select(c => c.Name)
                     .OrderBy(c => c)
                     .ToList();
-                Console.WriteLine($"Loaded {cities.Count} cities for {country}");
-            }
-            else
-            {
-                Console.WriteLine($"No cities found for {country}");
             }
         }
         catch (Exception ex)
@@ -184,7 +300,7 @@
     public class CountryData
     {
         public CountryName Name { get; set; } = new CountryName();
-        public string Cca2 { get; set; } = string.Empty; // Mã ISO 2 chữ cái
+        public string Cca2 { get; set; } = string.Empty;
     }
 
     public class CountryName

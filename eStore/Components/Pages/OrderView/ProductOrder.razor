@@ -6,6 +6,7 @@
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JS
 @using Microsoft.AspNetCore.SignalR.Client
+@using Services.Models.DTO
 @rendermode InteractiveServer
 
 <!-- Include FontAwesome for the product icon -->
@@ -226,7 +227,7 @@
 
 @code {
     private List<Product> filteredProducts = new();
-    private List<Category> categories = new();
+    private List<CategoryDTO> categories = new();
     private HubConnection? hubConnection;
     private int cartCount = 0;
 
