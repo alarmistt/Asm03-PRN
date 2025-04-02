@@ -1,5 +1,5 @@
-﻿using BusinessObject.Base;
-using BusinessObject.Entities;
+﻿using BusinessObject.Entities;
+using DataAccess.Base;
 using DataAccess.Interface;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -42,6 +42,10 @@ namespace DataAccess.Implement
             if (order != null)
             {
                 order.Status = newStatus;
+                if(newStatus == "Completed")
+                {
+                    order.ShippedDate = DateTime.Now;
+                }
                 await _context.SaveChangesAsync();
             }
         }

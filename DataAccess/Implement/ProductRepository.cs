@@ -1,11 +1,8 @@
-﻿using BusinessObject.Base;
+﻿
 using BusinessObject.Entities;
+using DataAccess.Base;
 using DataAccess.Interface;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace DataAccess.Implement
 {
@@ -17,10 +14,19 @@ namespace DataAccess.Implement
         {
             _context = context;
         }
-
         public async Task<IEnumerable<Product>> GetAllAsync()
         {
             return await _context.Products.ToListAsync();
+        }
+
+        public async Task<(IEnumerable<Product> Products, int TotalCount)> GetAllPageAsync(int pageNumber, int pageSize)
+        {
+            int totalCount = await _context.Products.CountAsync();
+            var products = await _context.Products
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+            return (products, totalCount);
         }
 
         public async Task<Product> GetByIdAsync(int id)
@@ -52,7 +58,6 @@ namespace DataAccess.Implement
                              $"Name={product.ProductName}, Weight={product.Weight}, " +
                              $"UnitPrice={product.UnitPrice}, UnitsInStock={product.UnitsInStock}");
 
-            // Cập nhật từng field cụ thể
             existingProduct.CategoryId = product.CategoryId;
             existingProduct.ProductName = product.ProductName;
             existingProduct.Weight = product.Weight;
@@ -64,7 +69,6 @@ namespace DataAccess.Implement
                              $"UnitsInStock={existingProduct.UnitsInStock}");
 
             var rowsAffected = await _context.SaveChangesAsync();
-            // Bỏ kiểm tra rowsAffected hoặc ghi log thay vì ném lỗi
             if (rowsAffected == 0)
             {
                 Console.WriteLine("Không có thay đổi nào được lưu vào cơ sở dữ liệu.");
@@ -81,11 +85,9 @@ namespace DataAccess.Implement
                 return false;
             }
 
-            // Kiểm tra xem sản phẩm có trong OrderDetail hay không
             var isProductInOrder = await IsProductInOrderDetailsAsync(id);
             if (isProductInOrder)
             {
-                // Không xóa và trả về false nếu sản phẩm tồn tại trong OrderDetail
                 Console.WriteLine($"Product with ID {id} cannot be deleted because it is referenced in OrderDetail.");
                 return false;
             }
@@ -100,23 +102,38 @@ namespace DataAccess.Implement
             return await _context.OrderDetail.AnyAsync(od => od.ProductId == id);
         }
 
-        public async Task<IEnumerable<Product>> SearchAsync(string name, decimal? unitPrice)
-        {
-            var query = _context.Products.AsQueryable();
-
-            if (!string.IsNullOrEmpty(name))
-                query = query.Where(p => p.ProductName.Contains(name));
-
-            if (unitPrice.HasValue)
-                query = query.Where(p => p.UnitPrice == unitPrice.Value);
-
-            return await query.ToListAsync();
-        }
-
         public Task<bool> ExistProductByCategoryId(int categoryId)
         {
             bool isExist = _context.Products.Any(p => p.CategoryId == categoryId);
             return Task.FromResult(isExist);
+        }
+
+        public async Task<(IEnumerable<Product> Products, int TotalCount)> FilterProductsAsync(int pageNumber, int pageSize, string searchName, string searchPriceText, int? categoryId)
+        {
+            var query = _context.Products.AsQueryable();
+
+            if (!string.IsNullOrEmpty(searchName))
+            {
+                query = query.Where(p => p.ProductName.Contains(searchName));
+            }
+
+            if (!string.IsNullOrEmpty(searchPriceText))
+            {
+                query = query.Where(p => p.UnitPrice.ToString().Contains(searchPriceText));
+            }
+
+            if (categoryId.HasValue && categoryId.Value != 0)
+            {
+                query = query.Where(p => p.CategoryId == categoryId.Value);
+            }
+
+            int totalCount = await query.CountAsync();
+            var products = await query
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return (products, totalCount);
         }
     }
 }

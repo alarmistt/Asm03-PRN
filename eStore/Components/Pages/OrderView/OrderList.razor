@@ -1,5 +1,6 @@
 ﻿@page "/orders"
 @using BusinessObject.Entities
+@using Microsoft.AspNetCore.Authorization
 @using Services.Interface
 @inject IOrderService OrderService
 @inject IVnPayService VnPayService 
@@ -12,8 +13,8 @@
 <PageTitle>Order</PageTitle>
 
 <CascadingAuthenticationState>
-    <AuthorizeView Roles="Admin,User">
-<Authorized Context="orderContext">
+	<AuthorizeView Roles="Admin">
+		<Authorized Context="authContext">
 <div class="mt-5 container">
     <div class="card bg-light rounded border-0 shadow-sm">
         <div class="card-header bg-warning-subtle text-dark py-3 rounded-top text-center">
@@ -60,20 +61,26 @@
                                     <td>@(order.ShippedDate?.ToShortDateString() ?? "N/A")</td>
                                     <td>@order.Freight</td>
                                     <td>@order.Status</td>
-                                    <td>
-                                        <button class="btn btn-outline-warning btn-sm mx-1" @onclick="() => EditOrder(order.OrderId)">
-                                            <i class="bi bi-pencil-square"></i> Edit
-                                        </button>
-                                        <button class="btn btn-outline-danger btn-sm mx-1" @onclick="() => DeleteOrder(order.OrderId)">
-                                            <i class="bi bi-trash"></i> Delete
-                                        </button>
-                                        @if (order.Status == "Pending") 
-                                        {
-                                            <button class="btn btn-outline-primary btn-sm mx-1" @onclick="() => PayOrder(order.OrderId)">
-                                                <i class="bi bi-credit-card"></i> Pay
-                                            </button>
-                                        }
-                                    </td>
+                                                <td>
+                                                    <button class="btn btn-outline-warning btn-sm mx-1" @onclick="() => EditOrder(order.OrderId)">
+                                                        <i class="bi bi-pencil-square"></i> Edit
+                                                    </button>
+                                                    <button class="btn btn-outline-danger btn-sm mx-1" @onclick="() => DeleteOrder(order.OrderId)">
+                                                        <i class="bi bi-trash"></i> Delete
+                                                    </button>
+                                                    @if (order.Status == "Pending")
+                                                    {
+                                                        <button class="btn btn-outline-primary btn-sm mx-1" @onclick="() => PayOrder(order.OrderId)">
+                                                            <i class="bi bi-credit-card"></i> Pay
+                                                        </button>
+                                                    }
+                                                    @if (order.Status == "Processing")
+                                                    {
+                                                        <button class="btn btn-outline-success btn-sm mx-1" @onclick="() => CompleteOrder(order.OrderId)">
+                                                            <i class="bi bi-check-circle"></i> Complete
+                                                        </button>
+                                                    }
+                                                </td>
                                 </tr>
                             }
                         </tbody>
@@ -85,9 +92,7 @@
 </div>
         </Authorized>
         <NotAuthorized>
-            <div class="alert alert-danger" role="alert">
-                You are not authorized to view this page.
-            </div>
+            <p class="text-danger">Bạn không có quyền truy cập.</p>
         </NotAuthorized>
     </AuthorizeView>
 </CascadingAuthenticationState>
@@ -232,6 +237,21 @@
         if (hubConnection is not null)
         {
             await hubConnection.DisposeAsync();
+        }
+    }
+
+    private async Task CompleteOrder(int orderId)
+    {
+        try
+        {
+            Console.WriteLine($"Completing order: {orderId}");
+            await OrderService.UpdateOrderStatus(orderId, "Completed");
+            await LoadOrders(); 
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error completing order: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("alert", $"Error completing order: {ex.Message}");
         }
     }
 

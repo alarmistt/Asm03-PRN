@@ -1,13 +1,12 @@
-﻿using Azure;
-using BusinessObject.Entities;
+﻿using BusinessObject.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace BusinessObject.Base
+namespace DataAccess.Base
 {
-    public class EStoreContext:DbContext
+    public class EStoreContext : DbContext
     {
-    
-        public EStoreContext(DbContextOptions<EStoreContext> options): base(options)
+
+        public EStoreContext(DbContextOptions<EStoreContext> options) : base(options)
         {
         }
         public DbSet<Category> Categories { get; set; }
@@ -18,8 +17,7 @@ namespace BusinessObject.Base
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<OrderDetail>()
-                .HasKey(od => new { od.OrderId, od.ProductId }); 
-
+                .HasKey(od => new { od.OrderId, od.ProductId });
             base.OnModelCreating(modelBuilder);
         }
     }

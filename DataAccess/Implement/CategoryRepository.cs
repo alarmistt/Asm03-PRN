@@ -1,6 +1,6 @@
-﻿using BusinessObject.Base;
-using BusinessObject.Entities;
+﻿using BusinessObject.Entities;
 using Core;
+using DataAccess.Base;
 using DataAccess.Interface;
 using Microsoft.EntityFrameworkCore;
 

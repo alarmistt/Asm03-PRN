@@ -8,9 +8,6 @@
 @inject JwtAuthenticationStateProvider AuthenticationStateProvider
 @rendermode InteractiveServer
 
-<CascadingAuthenticationState>
-<AuthorizeView Roles="Admin">
-        <Authorized Context="addProContext">
 <div class="container-fluid my-5 px-4">
     <div class="card border-0 shadow" style="border-radius: 12px; background-color: #ffffff;">
         <div class="card-header py-4 px-5" style="background: linear-gradient(135deg, #4B5EAA, #6B7280); color: white; border-radius: 12px 12px 0 0;">
@@ -49,7 +46,7 @@
 
                 <div class="mb-4">
                     <label for="Weight" class="form-label fw-medium text-muted">Weight</label>
-                    <InputText id="Weight" class="form-control shadow-sm" @bind-Value="product.Weight" @oninput="ValidateWeight" style="border-radius: 8px;" />
+                    <InputText id="Weight" class="form-control shadow-sm" @bind-Value="product.Weight"  style="border-radius: 8px;" />
                     <ValidationMessage For="@(() => product.Weight)" class="text-danger" />
                     @if (!string.IsNullOrEmpty(weightError))
                     {
@@ -93,14 +90,7 @@
         </div>
     </div>
 </div>
-        </Authorized>
-        <NotAuthorized>
-            <div class="alert alert-danger" role="alert">
-                You are not authorized to view this page.
-            </div>
-        </NotAuthorized>
-    </AuthorizeView>
-</CascadingAuthenticationState>
+
 <style>
     .form-control:focus, .form-select:focus {
         border-color: #4B5EAA;
@@ -180,23 +170,6 @@
         StateHasChanged();
     }
 
-    private void ValidateWeight(ChangeEventArgs e)
-    {
-        string value = e.Value?.ToString() ?? "";
-        if (string.IsNullOrEmpty(value))
-        {
-            weightError = "Weight cannot be empty.";
-        }
-        else if (!decimal.TryParse(value, out decimal weight) || weight <= 0)
-        {
-            weightError = "Weight must be a valid number greater than 0.";
-        }
-        else
-        {
-            weightError = "";
-        }
-        StateHasChanged();
-    }
 
     private void ValidateUnitPrice(ChangeEventArgs e)
     {
@@ -237,11 +210,6 @@
                 weightError = "Weight cannot be empty.";
                 return;
             }
-            if (!decimal.TryParse(product.Weight, out decimal weight) || weight <= 0)
-            {
-                weightError = "Weight must be a valid number greater than 0.";
-                return;
-            }
             if (product.UnitPrice < 1)
             {
                 unitPriceError = "Unit Price must be 1 or greater.";
@@ -270,11 +238,5 @@
     {
         NavigationManager.NavigateTo("/products");
     }
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            AuthenticationStateProvider.SetPrerendering(false);
-        }
-    }
+
 }
