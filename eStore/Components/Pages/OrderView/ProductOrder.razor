@@ -1,0 +1,363 @@
+﻿@page "/productsOrder"
+@using BusinessObject.Entities
+@using Services.Interface
+@inject IProductService ProductService
+@inject ICategoryService CategoryService
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JS
+@using Microsoft.AspNetCore.SignalR.Client
+@rendermode InteractiveServer
+
+<!-- Include FontAwesome for the product icon -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2Lw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+<div class="container-fluid my-5 px-4">
+    <div class="card border-0 shadow" style="border-radius: 12px; background-color: #ffffff;">
+        <div class="card-header py-4 px-5" style="background: linear-gradient(135deg, #4B5EAA, #6B7280); color: white; border-radius: 12px 12px 0 0;">
+            <div class="d-flex justify-content-between align-items-center">
+                <h3 class="mb-0 fw-normal">Product Order</h3>
+                <div class="d-flex align-items-center gap-3">
+                    <div class="input-group shadow-sm" style="border-radius: 20px; overflow: hidden; max-width: 250px;">
+                        <span class="input-group-text border-0" style="background-color: #f3f4f6;">
+                            <span class="tag-icon">🏷️</span>
+                        </span>
+                        <select class="form-select border-0" @bind="selectedCategoryId" @bind:event="onchange">
+                            <option value="0">All Categories</option>
+                            @foreach (var category in categories)
+                            {
+                                <option value="@category.CategoryId">@category.CategoryName</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="position-relative">
+                        <span class="cart-icon fs-4">
+                            <i class="fas fa-shopping-cart"></i>
+                        </span>
+                        @if (cartCount > 0)
+                        {
+                            <span class="badge bg-danger rounded-circle position-absolute" style="top: -5px; right: -10px; min-width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;">
+                                @cartCount
+                            </span>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-body px-5 pb-5">
+            @if (filteredProducts == null || !filteredProducts.Any())
+            {
+                <div class="text-center py-5">
+                    <span class="empty-icon display-4 text-muted">📦</span>
+                    <p class="text-muted mt-3 fs-5">
+                        @(selectedCategoryId == 0 ? "Your product list is empty." : "No products found in this category.")
+                    </p>
+                </div>
+            }
+            else
+            {
+                <div class="row row-cols-1 row-cols-md-3 g-4">
+                    @foreach (var product in filteredProducts)
+                    {
+                        <div class="col">
+                            <div class="card h-100 border-0 shadow-sm" style="border-radius: 15px; background-color: #fff;">
+                                <div class="position-relative d-flex justify-content-center pt-4">
+                                    <div class="image-circle" style="width: 150px; height: 150px; border-radius: 50%; background: linear-gradient(135deg, #4B5EAA, #6B7280); display: flex; align-items: center; justify-content: center; border: 5px solid #4B5EAA;">
+                                        <i class="fas fa-spray-can" style="font-size: 80px; color: #ffffff;"></i>
+                                    </div>
+                                </div>
+                                <div class="card-body text-center">
+                                    <h5 class="card-title" style="color: #1f2937; font-weight: 600;">@product.ProductName</h5>
+                                    <p class="card-text text-muted" style="font-size: 0.9rem;">
+                                        @categories.FirstOrDefault(c => c.CategoryId == product.CategoryId)?.CategoryName | @product.Weight
+                                    </p>
+                                    <h6 class="card-price" style="color: #4B5EAA; font-size: 1.5rem; font-weight: 700;">@product.UnitPrice.ToString("C")</h6>
+                                    <p class="stock-status mt-2">
+                                        <span class="badge px-3 py-1" style="@(product.UnitsInStock > 0 ? "background-color: #dcfce7; color: #16a34a;" : "background-color: #fee2e2; color: #dc2626;") border-radius: 20px;">
+                                            @(product.UnitsInStock > 0 ? $"In Stock: {product.UnitsInStock}" : "Out of Stock")
+                                        </span>
+                                    </p>
+                                    <button class="btn btn-add-to-cart mt-3 w-100" style="background-color: #4B5EAA; color: white; border-radius: 25px; font-weight: 500;" @onclick="() => AddToCart(product.ProductId)">
+                                        Add to Cart
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <div class="d-flex justify-content-end align-items-center mt-4">
+                    <nav>
+                        <ul class="pagination mb-0 custom-pagination">
+                            <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                                <button class="page-link" @onclick="() => ChangePage(currentPage - 1)">
+                                    <i class="fas fa-chevron-left"></i>
+                                </button>
+                            </li>
+                            @foreach (var pageNumber in GetPageNumbers())
+                            {
+                                if (pageNumber == -1)
+                                {
+                                    <li class="page-item disabled">
+                                        <span class="page-link">...</span>
+                                    </li>
+                                }
+                                else
+                                {
+                                    <li class="page-item @(currentPage == pageNumber ? "active" : "")">
+                                        <button class="page-link" @onclick="() => ChangePage(pageNumber)">@pageNumber</button>
+                                    </li>
+                                }
+                            }
+                            <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                                <button class="page-link" @onclick="() => ChangePage(currentPage + 1)">
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .cart-icon i {
+        background: linear-gradient(135deg, white, #6B7280);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        transition: all 0.3s ease;
+    }
+
+        .cart-icon i:hover {
+            background: linear-gradient(135deg, white, #5b6270);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            transform: scale(1.1);
+        }
+
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1) !important;
+    }
+
+    .image-circle {
+        position: relative;
+        z-index: 1;
+    }
+
+    .btn-add-to-cart {
+        padding: 10px 20px;
+        font-size: 1rem;
+        transition: background-color 0.3s ease;
+    }
+
+        .btn-add-to-cart:hover {
+            background-color: #3b4c8a !important;
+        }
+
+    .card-title {
+        margin-bottom: 0.5rem;
+    }
+
+    .card-text {
+        margin-bottom: 1rem;
+    }
+
+    .stock-status {
+        margin-bottom: 1rem;
+    }
+
+    .cart-icon {
+        cursor: pointer;
+    }
+
+    .custom-pagination .page-item {
+        margin: 0 5px;
+    }
+
+    .custom-pagination .page-link {
+        border-radius: 50px !important;
+        border: 1px solid #d1d5db;
+        color: #4B5EAA;
+        background-color: #ffffff;
+        padding: 8px 14px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    }
+
+        .custom-pagination .page-link:hover {
+            background-color: #4B5EAA;
+            color: #ffffff;
+            border-color: #4B5EAA;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+    .custom-pagination .page-item.active .page-link {
+        background: linear-gradient(135deg, #4B5EAA, #6B7280);
+        color: #ffffff;
+        border-color: #4B5EAA;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    }
+
+    .custom-pagination .page-item.disabled .page-link {
+        background-color: #f3f4f6;
+        color: #9ca3af;
+        border-color: #d1d5db;
+        cursor: not-allowed;
+        box-shadow: none;
+    }
+
+    .custom-pagination .page-link i {
+        font-size: 14px;
+    }
+
+    .form-select:focus {
+        border-color: #4B5EAA;
+        box-shadow: 0 0 8px rgba(75, 94, 170, 0.2);
+    }
+</style>
+
+@code {
+    private List<Product> filteredProducts = new();
+    private List<Category> categories = new();
+    private HubConnection? hubConnection;
+    private int cartCount = 0;
+
+    private int currentPage = 1;
+    private int pageSize = 6;
+    private int totalCount = 0;
+    private int totalPages => (int)Math.Ceiling((double)totalCount / pageSize);
+
+    private int _selectedCategoryId = 0;
+    private int selectedCategoryId
+    {
+        get => _selectedCategoryId;
+        set
+        {
+            _selectedCategoryId = value;
+            currentPage = 1;
+            _ = LoadProducts();
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProducts();
+        await SetupSignalR();
+    }
+
+    private async Task LoadProducts()
+    {
+        try
+        {
+            await InvokeAsync(async () =>
+            {
+                categories = (await CategoryService.GetCategories()).ToList();
+                if (selectedCategoryId == 0)
+                {
+                    var (products, count) = await ProductService.GetAllProductsPageAsync(currentPage, pageSize);
+                    filteredProducts = products.ToList();
+                    totalCount = count;
+                }
+                else
+                {
+                    var (products, count) = await ProductService.FilterProductsAsync(
+                        currentPage,
+                        pageSize,
+                        null, // No search by name
+                        null, // No search by price
+                        selectedCategoryId
+                    );
+                    filteredProducts = products.ToList();
+                    totalCount = count;
+                }
+                StateHasChanged();
+            });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading products: {ex.Message}");
+        }
+    }
+
+    private async Task ChangePage(int page)
+    {
+        if (page >= 1 && page <= totalPages)
+        {
+            currentPage = page;
+            await LoadProducts();
+        }
+    }
+
+    private void AddToCart(int productId)
+    {
+        cartCount++;
+        StateHasChanged();
+    }
+
+    private async Task SetupSignalR()
+    {
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl(NavigationManager.ToAbsoluteUri("/chatHub"))
+            .WithAutomaticReconnect()
+            .Build();
+
+        hubConnection.On("ReceiveMessage", async () =>
+        {
+            Console.WriteLine("🔄 Product list updated!");
+            await LoadProducts();
+            StateHasChanged();
+        });
+
+        await hubConnection.StartAsync();
+    }
+
+    private IEnumerable<int> GetPageNumbers()
+    {
+        var pages = new List<int>();
+        if (totalPages <= 3)
+        {
+            for (int i = 1; i <= totalPages; i++)
+            {
+                pages.Add(i);
+            }
+        }
+        else
+        {
+            if (currentPage > 3)
+            {
+                pages.Add(1);
+                pages.Add(-1);
+            }
+
+            int start = Math.Max(1, currentPage - 2);
+            int end = Math.Min(totalPages, currentPage + 2);
+            for (int i = start; i <= end; i++)
+            {
+                pages.Add(i);
+            }
+
+            if (currentPage < totalPages - 2)
+            {
+                pages.Add(-1);
+                pages.Add(totalPages);
+            }
+        }
+        return pages;
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.DisposeAsync();
+        }
+    }
+}

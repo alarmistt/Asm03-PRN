@@ -1,14 +1,8 @@
-﻿using BusinessObject.Entities;
+﻿
+using BusinessObject.Entities;
 using DataAccess.Interface;
 using Microsoft.AspNetCore.SignalR;
 using Services.Interface;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using DataAccess.Implement;
 
 namespace Services.Implement
 {
@@ -22,10 +16,13 @@ namespace Services.Implement
             _repository = repository;
             _hubContext = hubContext;
         }
-
         public async Task<IEnumerable<Product>> GetAllProductsAsync()
         {
             return await _repository.GetAllAsync();
+        }
+        public async Task<(IEnumerable<Product> Products, int TotalCount)> GetAllProductsPageAsync(int pageNumber, int pageSize)
+        {
+            return await _repository.GetAllPageAsync(pageNumber, pageSize);
         }
 
         public async Task<Product> GetProductByIdAsync(int id)
@@ -53,14 +50,15 @@ namespace Services.Implement
             await _hubContext.Clients.All.SendAsync("ReceiveMessage");
             return result;
         }
+
         public async Task<bool> CheckProductInOrderDetailsAsync(int id)
         {
             return await _repository.IsProductInOrderDetailsAsync(id);
         }
 
-        public async Task<IEnumerable<Product>> SearchProductsAsync(string name, decimal? unitPrice)
+        public async Task<(IEnumerable<Product> Products, int TotalCount)> FilterProductsAsync(int pageNumber, int pageSize, string searchName, string searchPriceText, int? categoryId)
         {
-            return await _repository.SearchAsync(name, unitPrice);
+            return await _repository.FilterProductsAsync(pageNumber, pageSize, searchName, searchPriceText, categoryId);
         }
     }
 }
