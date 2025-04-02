@@ -46,6 +46,9 @@ builder.Services.AddSignalR();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("https://yourapi.com") });
 
+builder.Services.AddHttpContextAccessor();
+
+
 
 var app = builder.Build();
 

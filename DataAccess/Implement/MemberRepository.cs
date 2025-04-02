@@ -60,6 +60,7 @@ namespace DataAccess.Implement
         public async Task<PaginatedList<Member>> GetMembers(int pageNumber, int pageSize)
         {
             var query = _context.Member.AsQueryable();
+            query = query.OrderByDescending(x => x.MemberId);
             return await PaginatedList<Member>.CreateAsync(query, pageNumber, pageSize);
         }
 
@@ -78,6 +79,7 @@ namespace DataAccess.Implement
             {
                 query = query.Where(x => x.Country.ToLower().Contains(country.ToLower()));
             }
+            query = query.OrderByDescending(x => x.MemberId);
             return await PaginatedList<Member>.CreateAsync(query, pageNumber, pageSize);
         }
 

@@ -50,12 +50,14 @@ namespace DataAccess.Implement
             {
                 query = query.Where(x => x.CategoryName.ToLower().Contains(name.ToLower()));
             }
+            query = query.OrderByDescending(x => x.CategoryId);
             return await PaginatedList<Category>.CreateAsync(query, pageNumber, pageSize);
         }
 
         public async Task<PaginatedList<Category>> GetCategories(int pageNumber, int pageSize)
         {
             var query = _context.Categories.AsQueryable();
+            query = query.OrderByDescending(x => x.CategoryId);
             return await PaginatedList<Category>.CreateAsync(query, pageNumber, pageSize);
         }
 
@@ -66,6 +68,7 @@ namespace DataAccess.Implement
             {
                 query = query.Where(x => x.CategoryName.ToLower().Contains(name.ToLower()));
             }
+            query = query.OrderByDescending(x => x.CategoryId);
             return await query.ToListAsync();
         }
 

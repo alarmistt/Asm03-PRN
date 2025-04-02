@@ -27,7 +27,7 @@ namespace Services.Implement
         public async Task<bool> AddCategory(Category category)
         {
             bool isSuccess = await _categoryRepository.AddCategoryAsync(category);
-            await _hubContext.Clients.All.SendAsync("ReceiveMessage", "Category added", category);     
+            await _hubContext.Clients.All.SendAsync("ReceiveMessage");
             return isSuccess;
         }
 
@@ -44,7 +44,7 @@ namespace Services.Implement
             bool isSuccess = await _categoryRepository.DeleteCategory(categoryId);
             if (isSuccess)
             {
-                await _hubContext.Clients.All.SendAsync("ReceiveMessage", "Category deleted", category);
+                await _hubContext.Clients.All.SendAsync("ReceiveMessage");
             }
             return isSuccess;
         }
@@ -54,7 +54,7 @@ namespace Services.Implement
             bool isSuccess = await _categoryRepository.UpdateCategory(category);
             if (isSuccess)
             {
-                await _hubContext.Clients.All.SendAsync("ReceiveMessage", "Category updated", category);
+                await _hubContext.Clients.All.SendAsync("ReceiveMessage");
             }
             return isSuccess;
         }

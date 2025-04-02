@@ -2,6 +2,7 @@
 using Core;
 using DataAccess.Implement;
 using DataAccess.Interface;
+using Microsoft.AspNetCore.SignalR;
 using Services.Interface;
 
 namespace Services.Implement
@@ -10,9 +11,12 @@ namespace Services.Implement
     {
         private readonly IMemberRepository _memberRepository;
 
-        public MemberService(IMemberRepository memberRepository)
+        private readonly IHubContext<ChatHub> _hubContext;
+
+        public MemberService(IMemberRepository memberRepository, IHubContext<ChatHub> hubContext)
         {
             _memberRepository = memberRepository;
+            _hubContext = hubContext;
         }
 
         public async Task<bool> AddMember(Member member)
@@ -28,12 +32,15 @@ namespace Services.Implement
         public async Task<bool> UpdateMember(Member member)
         {
             member.Password = this.HashPassword(member.Password);
+            await _hubContext.Clients.All.SendAsync("ReceiveMessage");
             return await _memberRepository.UpdateMember(member);
         }
 
         public async Task<bool> DeleteMember(int memberId)
         {
-            return await _memberRepository.DeleteMember(memberId);
+            bool result = await _memberRepository.DeleteMember(memberId);
+            await _hubContext.Clients.All.SendAsync("ReceiveMessage");
+            return result;
         }
 
         public async Task<Member> GetMember(int memberId)
