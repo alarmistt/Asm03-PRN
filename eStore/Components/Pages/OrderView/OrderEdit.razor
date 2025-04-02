@@ -6,7 +6,9 @@
 @rendermode InteractiveServer
 <PageTitle>Edit Order</PageTitle>
 <h3>Edit Order</h3>
-
+<CascadingAuthenticationState>
+    <AuthorizeView Roles="Admin,User">
+<Authorized Context="EditOrderContext">
 @if (order == null)
 {
     <p>Loading...</p>
@@ -33,6 +35,14 @@ else
         <button @onclick="Cancel">Cancel</button>
     </form>
 }
+        </Authorized>
+        <NotAuthorized>
+            <div class="alert alert-danger" role="alert">
+                You are not authorized to view this page.
+            </div>
+        </NotAuthorized>
+    </AuthorizeView>
+</CascadingAuthenticationState>
 
 @code {
     [Parameter] public int OrderId { get; set; }

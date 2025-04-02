@@ -42,11 +42,16 @@
         var result = await AuthService.LoginAsync(Email, Password);
         if (result)
         {
-            NavManager.NavigateTo("/Members");
-        }
-        else
-        {
-            ErrorMessage = "Login failed.";
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            if (user.IsInRole("Admin"))
+            {
+                NavManager.NavigateTo("/members");
+            }
+            else
+            {
+                NavManager.NavigateTo("/orders");
+            }
         }
     }
     protected override async Task OnAfterRenderAsync(bool firstRender)

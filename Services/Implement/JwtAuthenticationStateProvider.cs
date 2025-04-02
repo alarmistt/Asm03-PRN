@@ -1,5 +1,4 @@
 ﻿using Blazored.SessionStorage;
-using BusinessObject.Entities;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -12,6 +11,7 @@ public class JwtAuthenticationStateProvider : AuthenticationStateProvider
     private readonly ISessionStorageService _sessionStorage;
     private readonly IConfiguration _configuration;
     private bool _isPrerendering = true;
+    private string _token ;
 
     public JwtAuthenticationStateProvider(ISessionStorageService sessionStorage, IConfiguration configuration)
     {
@@ -28,16 +28,16 @@ public class JwtAuthenticationStateProvider : AuthenticationStateProvider
     public async Task SetTokenAsync(string token)
     {
         await _sessionStorage.SetItemAsync("authToken", token);
+        _token = token ?? string.Empty;
         NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
     }
     public async Task<int?> GetIdRoleAsync()
     {
-        var token = await _sessionStorage.GetItemAsync<string>("authToken");
-        if (string.IsNullOrEmpty(token))
+        if (string.IsNullOrEmpty(_token))
             return null;
 
         var handler = new JwtSecurityTokenHandler();
-        var jwtToken = handler.ReadJwtToken(token);
+        var jwtToken = handler.ReadJwtToken(_token);
         var roleClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == "id");
         return int.Parse(roleClaim?.Value!);
     }
@@ -45,7 +45,7 @@ public class JwtAuthenticationStateProvider : AuthenticationStateProvider
     {
         if (_isPrerendering)
         {
- 
+
             return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
         }
 
