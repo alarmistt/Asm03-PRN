@@ -6,9 +6,11 @@ using eStore.DI;
 using Services.Implement;
 using Services.Interface;
 using OfficeOpenXml;
-using Microsoft.AspNetCore.Components.Authorization;
+
 
 var builder = WebApplication.CreateBuilder(args);
+var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
+builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 
 ExcelPackage.License.SetNonCommercialPersonal("ASM03");
 
@@ -53,6 +55,9 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Error", createScopeForErrors: true);    
     app.UseHsts();
 }
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Login}/{id?}");
 app.MapHub<ChatHub>("/chatHub");
 app.UseHttpsRedirection();
 app.UseAuthentication();
