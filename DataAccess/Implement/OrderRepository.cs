@@ -42,6 +42,10 @@ namespace DataAccess.Implement
             if (order != null)
             {
                 order.Status = newStatus;
+                if(newStatus == "Completed")
+                {
+                    order.ShippedDate = DateTime.Now;
+                }
                 await _context.SaveChangesAsync();
             }
         }
