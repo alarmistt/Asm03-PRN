@@ -58,20 +58,26 @@
                                     <td>@(order.ShippedDate?.ToShortDateString() ?? "N/A")</td>
                                     <td>@order.Freight</td>
                                     <td>@order.Status</td>
-                                    <td>
-                                        <button class="btn btn-outline-warning btn-sm mx-1" @onclick="() => EditOrder(order.OrderId)">
-                                            <i class="bi bi-pencil-square"></i> Edit
-                                        </button>
-                                        <button class="btn btn-outline-danger btn-sm mx-1" @onclick="() => DeleteOrder(order.OrderId)">
-                                            <i class="bi bi-trash"></i> Delete
-                                        </button>
-                                        @if (order.Status == "Pending") 
-                                        {
-                                            <button class="btn btn-outline-primary btn-sm mx-1" @onclick="() => PayOrder(order.OrderId)">
-                                                <i class="bi bi-credit-card"></i> Pay
-                                            </button>
-                                        }
-                                    </td>
+                                                <td>
+                                                    <button class="btn btn-outline-warning btn-sm mx-1" @onclick="() => EditOrder(order.OrderId)">
+                                                        <i class="bi bi-pencil-square"></i> Edit
+                                                    </button>
+                                                    <button class="btn btn-outline-danger btn-sm mx-1" @onclick="() => DeleteOrder(order.OrderId)">
+                                                        <i class="bi bi-trash"></i> Delete
+                                                    </button>
+                                                    @if (order.Status == "Pending")
+                                                    {
+                                                        <button class="btn btn-outline-primary btn-sm mx-1" @onclick="() => PayOrder(order.OrderId)">
+                                                            <i class="bi bi-credit-card"></i> Pay
+                                                        </button>
+                                                    }
+                                                    @if (order.Status == "Processing")
+                                                    {
+                                                        <button class="btn btn-outline-success btn-sm mx-1" @onclick="() => CompleteOrder(order.OrderId)">
+                                                            <i class="bi bi-check-circle"></i> Complete
+                                                        </button>
+                                                    }
+                                                </td>
                                 </tr>
                             }
                         </tbody>
@@ -223,6 +229,21 @@
         if (hubConnection is not null)
         {
             await hubConnection.DisposeAsync();
+        }
+    }
+
+    private async Task CompleteOrder(int orderId)
+    {
+        try
+        {
+            Console.WriteLine($"Completing order: {orderId}");
+            await OrderService.UpdateOrderStatus(orderId, "Completed");
+            await LoadOrders(); 
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error completing order: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("alert", $"Error completing order: {ex.Message}");
         }
     }
 
