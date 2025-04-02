@@ -25,6 +25,7 @@ namespace BusinessObject.Entities
         public int UnitsInStock { get; set; }
 
         public Category Category { get; set; }
+        public DateTimeOffset? DeletedDate { get; set; } = null;
         public ICollection<OrderDetail> OrderDetails { get; set; }
     }
 }
