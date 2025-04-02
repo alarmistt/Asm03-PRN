@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace _4.BusinessObject.Migrations
+namespace BusinessObject.Migrations
 {
     [DbContext(typeof(EStoreContext))]
     partial class EStoreContextModelSnapshot : ModelSnapshot
@@ -70,8 +70,11 @@ namespace _4.BusinessObject.Migrations
 
                     b.Property<string>("Password")
                         .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("MemberId");
 

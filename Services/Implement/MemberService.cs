@@ -1,5 +1,6 @@
 ﻿using BusinessObject.Entities;
 using Core;
+using DataAccess.Implement;
 using DataAccess.Interface;
 using Services.Interface;
 
@@ -16,11 +17,17 @@ namespace Services.Implement
 
         public async Task<bool> AddMember(Member member)
         {
+            member.Password = this.HashPassword(member.Password);
             return await _memberRepository.AddMember(member);
+        }
+        public string HashPassword(string password)
+        {
+            return BCrypt.Net.BCrypt.HashPassword(password);
         }
 
         public async Task<bool> UpdateMember(Member member)
         {
+            member.Password = this.HashPassword(member.Password);
             return await _memberRepository.UpdateMember(member);
         }
 
@@ -44,10 +51,6 @@ namespace Services.Implement
             return await _memberRepository.GetMembers(email, companyName, country, pageNumber, pageSize);
         }
 
-        public async Task<Member?> Login(string email, string password)
-        {
-            return await _memberRepository.Login(email, password);
-        }
 
         public async Task<Member> GetMembersByEmailAddress(string emailAddress)
         {

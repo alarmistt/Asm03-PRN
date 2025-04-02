@@ -1,52 +1,81 @@
-﻿@page "/myaccount/{MemberId:int?}"
+﻿@page "/register"
+@layout EmptyLayout
 @using BusinessObject.Entities
 @using Services.Interface
+@using eStore.Components.Layout
+
 @inject IMemberService MemberService
 @inject NavigationManager NavigationManager
-@inject IJSRuntime JSRuntime
 @inject HttpClient Http
 
-<h3>My Account</h3>
+@rendermode InteractiveServer
 
-@if (member == null)
-{
-    <p>Loading...</p>
-}
-else
-{
-    <EditForm Model="member" OnValidSubmit="HandleValidSubmit">
-        <DataAnnotationsValidator />
-        <ValidationSummary />
+<div class="container mt-5">
+    <div class="card shadow-sm border-0 rounded" style="background-color: #f8f9fa;">
+        <div class="card-header text-white text-center py-3 rounded-top" style="background-color: #6c757d;">
+            <h3 class="mb-0">Register</h3>
+        </div>
+        <div class="card-body">
+            <EditForm Model="member" OnValidSubmit="HandleValidSubmit">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
 
-        <div class="mb-3">
-            <label for="email" class="form-label">Email</label>
-            <InputText id="email" class="form-control" @bind-Value="member.Email" disabled />
-        </div>
-        <div class="mb-3">
-            <label for="companyName" class="form-label">Company Name</label>
-            <InputText id="companyName" class="form-control" @bind-Value="member.CompanyName" />
-        </div>
-        <div class="mb-3">
-            <label for="city" class="form-label">City</label>
-            <InputText id="city" class="form-control" @bind-Value="member.City" />
-        </div>
-        <div class="mb-3">
-            <label for="country" class="form-label">Country</label>
-            <InputText id="country" class="form-control" @bind-Value="member.Country" />
-        </div>
-        <div class="mb-3">
-            <label for="password" class="form-label">Password</label>
-            <InputText id="password" type="password" class="form-control" @bind-Value="member.Password" />
-        </div>
+                <div class="mb-3">
+                    <label for="Email" class="form-label fw-bold">Email</label>
+                    <InputText id="Email" class="form-control" @bind-Value="member.Email" />
+                </div>
+                <div class="mb-3">
+                    <label for="CompanyName" class="form-label fw-bold">Company Name</label>
+                    <InputText id="CompanyName" class="form-control" @bind-Value="member.CompanyName" />
+                </div>
 
-        <button type="submit" class="btn btn-primary">Update</button>
-    </EditForm>
-}
+                <!-- Dropdown chọn quốc gia -->
+                <div class="mb-3">
+                    <label for="Country" class="form-label fw-bold">Country</label>
+                    <select id="Country" class="form-select" @onchange="OnCountryChanged">
+                        <option value="">Select a country</option>
+                        @foreach (var country in countries)
+                        {
+                            <option value="@country.Name.Common" selected="@(member.Country == country.Name.Common)">@country.Name.Common</option>
+                        }
+                    </select>
+                </div>
+
+                <!-- Dropdown chọn tỉnh/thành phố -->
+                <div class="mb-3">
+                    <label for="City" class="form-label fw-bold">Province/City</label>
+                    <select id="City" class="form-select" @bind="member.City">
+                        <option value="">Select a province/city</option>
+                        @foreach (var city in cities)
+                        {
+                            <option value="@city">@city</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label for="Password" class="form-label fw-bold">Password</label>
+                    <InputText id="Password" class="form-control" type="password" @bind-Value="member.Password" />
+                </div>
+
+                <div class="d-flex justify-content-end">
+                    <button type="submit" class="btn btn-success me-2">
+                        <i class="bi bi-save"></i> Register
+                    </button>
+                    <button type="button" class="btn btn-danger" @onclick="Cancel">
+                        <i class="bi bi-x-circle"></i> Cancel
+                    </button>
+                </div>
+            </EditForm>
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="alert alert-danger mt-3">@errorMessage</div>
+            }
+        </div>
+    </div>
+</div>
 
 @code {
-    [Parameter]
-    public int? MemberId { get; set; }
-
     private Member member = new();
     private List<CountryData> countries = new();
     private List<string> cities = new();
@@ -55,22 +84,6 @@ else
     protected override async Task OnInitializedAsync()
     {
         await LoadCountries();
-
-        if (MemberId.HasValue)
-        {
-            try
-            {
-                member = await MemberService.GetMember(MemberId.Value);
-                if (!string.IsNullOrEmpty(member.Country))
-                {
-                    await LoadCities(member.Country);
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error loading member: {ex.Message}");
-            }
-        }
     }
 
     private async Task LoadCountries()
@@ -148,19 +161,12 @@ else
     {
         try
         {
-            if (MemberId.HasValue)
-            {
-                await MemberService.UpdateMember(member);
-            }
-            else
-            {
-                await MemberService.AddMember(member);
-            }
-            NavigationManager.NavigateTo("/members");
+            await MemberService.AddMember(member);
+            NavigationManager.NavigateTo("/login");
         }
         catch (Exception ex)
         {
-            errorMessage = $"Error saving member: {ex.Message}";
+            errorMessage = $"Error registering member: {ex.Message}";
             if (ex.InnerException != null)
             {
                 errorMessage += $" Inner exception: {ex.InnerException.Message}";
@@ -171,7 +177,7 @@ else
 
     private void Cancel()
     {
-        NavigationManager.NavigateTo("/members");
+        NavigationManager.NavigateTo("/login");
     }
 
     public class CountryData
@@ -195,4 +201,3 @@ else
         public string Name { get; set; } = string.Empty;
     }
 }
-
