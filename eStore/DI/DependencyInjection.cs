@@ -1,4 +1,5 @@
-﻿using DataAccess.Base;
+﻿using CloudinaryDotNet;
+using DataAccess.Base;
 using eStore.Config;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -38,6 +39,24 @@ namespace eStore.DI
             services.AddSingleton<ICacheService, CacheService>();
 
         }
+        public static void AddCloudinary(this IServiceCollection services, IConfiguration configuration)
+        {
+            services.AddSingleton<Cloudinary>(provider =>
+            {
+                var configuration = provider.GetRequiredService<IConfiguration>();
+                var cloudName = configuration["Cloudinary:CloudName"];
+                var apiKey = configuration["Cloudinary:ApiKey"];
+                var apiSecret = configuration["Cloudinary:ApiSecret"];
+
+                if (string.IsNullOrEmpty(cloudName) || string.IsNullOrEmpty(apiKey) || string.IsNullOrEmpty(apiSecret))
+                {
+                    throw new InvalidOperationException("Cloudinary configuration is missing in appsettings.json.");
+                }
+
+                return new Cloudinary(new Account(cloudName, apiKey, apiSecret));
+            });
+        }
+           
         public static void AddDatabase(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddDbContext<EStoreContext>(options =>

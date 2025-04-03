@@ -23,7 +23,7 @@ namespace BusinessObject.Entities
 
         [Required, Range(0, int.MaxValue)]
         public int UnitsInStock { get; set; }
-
+        public string ImageUrl { get; set; }
         public Category Category { get; set; }
         public DateTimeOffset? DeletedDate { get; set; } = null;
         public ICollection<OrderDetail> OrderDetails { get; set; }
