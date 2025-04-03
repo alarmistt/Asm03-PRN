@@ -1,11 +1,11 @@
-﻿@page "/product/addnew"
-@using BusinessObject.Entities
+﻿
+@page "/product/addnew"
 @using Services.Interface
 @using Services.Models.DTO
 @inject IProductService ProductService
 @inject ICategoryService CategoryService
 @inject NavigationManager NavigationManager
-@inject JwtAuthenticationStateProvider AuthenticationStateProvider
+@inject IJSRuntime JS
 @rendermode InteractiveServer
 
 <div class="container-fluid my-5 px-4">
@@ -20,7 +20,7 @@
                 <DataAnnotationsValidator />
                 <div class="mb-4">
                     <label for="CategoryId" class="form-label fw-medium text-muted">Category</label>
-                    <InputSelect id="CategoryId" class="form-select shadow-sm" @bind-Value="product.CategoryId" @oninput="ValidateCategory" style="border-radius: 8px;">
+                    <InputSelect id="CategoryId" class="form-select shadow-sm" @bind-Value="product.CategoryId" style="border-radius: 8px;">
                         <option value="0" selected>Select a category</option>
                         @foreach (var category in categories)
                         {
@@ -46,7 +46,7 @@
 
                 <div class="mb-4">
                     <label for="Weight" class="form-label fw-medium text-muted">Weight</label>
-                    <InputText id="Weight" class="form-control shadow-sm" @bind-Value="product.Weight"  style="border-radius: 8px;" />
+                    <InputText id="Weight" class="form-control shadow-sm" @bind-Value="product.Weight" style="border-radius: 8px;" />
                     <ValidationMessage For="@(() => product.Weight)" class="text-danger" />
                     @if (!string.IsNullOrEmpty(weightError))
                     {
@@ -116,7 +116,7 @@
 </style>
 
 @code {
-    private Product product = new Product();
+    private ProductDTO product = new();
     private List<CategoryDTO> categories = new();
     private string errorMessage = "";
     private string categoryError = "";
@@ -130,7 +130,7 @@
         try
         {
             categories = (await CategoryService.GetCategories()).ToList();
-            product = new Product
+            product = new ProductDTO
                 {
                     CategoryId = 0,
                     ProductName = "",
@@ -143,13 +143,6 @@
         {
             errorMessage = $"Error loading categories: {ex.Message}";
         }
-    }
-
-    private void ValidateCategory(ChangeEventArgs e)
-    {
-        int.TryParse(e.Value?.ToString(), out int categoryId);
-        categoryError = categoryId <= 0 ? "Please select a valid category." : "";
-        StateHasChanged();
     }
 
     private void ValidateProductName(ChangeEventArgs e)
@@ -170,7 +163,6 @@
         StateHasChanged();
     }
 
-
     private void ValidateUnitPrice(ChangeEventArgs e)
     {
         decimal.TryParse(e.Value?.ToString(), out decimal value);
@@ -189,7 +181,6 @@
     {
         try
         {
-            // Final validation before submit
             if (product.CategoryId <= 0)
             {
                 categoryError = "Please select a valid category.";
@@ -238,5 +229,4 @@
     {
         NavigationManager.NavigateTo("/products");
     }
-
 }

@@ -8,33 +8,35 @@ namespace DataAccess.Implement
 {
     public class MemberRepository : IMemberRepository
     {
-        private readonly EStoreContext _context;
+        private readonly IDbContextFactory<EStoreContext> _contextFactory;
 
-        public MemberRepository(EStoreContext context)
+        public MemberRepository(IDbContextFactory<EStoreContext> contextFactory)
         {
-            _context = context;
+            _contextFactory = contextFactory;
         }
 
         public async Task<bool> AddMember(Member member)
         {
-            var exist = await _context.Member.FirstOrDefaultAsync(m => m.Email == member.Email);
+            using var context = _contextFactory.CreateDbContext();
+            var exist = await context.Member.FirstOrDefaultAsync(m => m.Email == member.Email);
 
             if (exist != null)
             {
                 throw new Exception("Email already exists");
             }
-            _context.Member.Add(member);
-            await _context.SaveChangesAsync();
+            context.Member.Add(member);
+            await context.SaveChangesAsync();
             return true;
         }
 
         public async Task<bool> DeleteMember(int memberId)
         {
-            var exist = await _context.Member.FindAsync(memberId);
+            using var context = _contextFactory.CreateDbContext();
+            var exist = await context.Member.FindAsync(memberId);
             if (exist != null)
             {
-                _context.Member.Remove(exist);
-                await _context.SaveChangesAsync();
+                context.Member.Remove(exist);
+                await context.SaveChangesAsync();
                 return true;
             }
             else
@@ -45,7 +47,8 @@ namespace DataAccess.Implement
 
         public async Task<Member?> GetMember(int memberId)
         {
-            var member = await _context.Member.FindAsync(memberId);
+            using var context = _contextFactory.CreateDbContext();
+            var member = await context.Member.FindAsync(memberId);
 
             if (member != null)
             {
@@ -59,14 +62,16 @@ namespace DataAccess.Implement
 
         public async Task<PaginatedList<Member>> GetMembers(int pageNumber, int pageSize)
         {
-            var query = _context.Member.AsQueryable();
+            using var context = _contextFactory.CreateDbContext();
+            var query = context.Member.AsQueryable();
             query = query.OrderByDescending(x => x.MemberId);
             return await PaginatedList<Member>.CreateAsync(query, pageNumber, pageSize);
         }
 
         public async Task<PaginatedList<Member>> GetMembers(string email, string companyName, string country, int pageNumber, int pageSize)
         {
-            var query = _context.Member.AsQueryable();
+            using var context = _contextFactory.CreateDbContext();
+            var query = context.Member.AsQueryable();
             if (!string.IsNullOrWhiteSpace(email))
             {
                 query = query.Where(x => x.Email.ToLower().Contains(email.ToLower()));
@@ -85,12 +90,14 @@ namespace DataAccess.Implement
 
         public async Task<IEnumerable<Member>> GetMembers()
         {
-            return await _context.Member.ToListAsync();
+            using var context = _contextFactory.CreateDbContext();
+            return await context.Member.ToListAsync();
         }
 
         public async Task<Member?> GetMembersByEmailAddress(string emailAddress)
         {
-            var exist = await _context.Member.FirstOrDefaultAsync(m => m.Email == emailAddress);
+            using var context = _contextFactory.CreateDbContext();
+            var exist = await context.Member.FirstOrDefaultAsync(m => m.Email == emailAddress);
 
             if (exist != null)
             {
@@ -104,18 +111,15 @@ namespace DataAccess.Implement
 
         public async Task<bool> UpdateMember(Member member)
         {
-            var exist = await _context.Member.FindAsync(member.MemberId);
-
-            if (exist != null)
+            using var context = _contextFactory.CreateDbContext();
+            var existingMember = await context.Member.FindAsync(member.MemberId);
+            if (existingMember != null)
             {
-                _context.Member.Update(member);
-                await _context.SaveChangesAsync();
-                return true;
+                context.Entry(existingMember).State = EntityState.Detached;
             }
-            else
-            {
-                return false;
-            }
+            context.Member.Update(member);
+            await context.SaveChangesAsync();
+            return true;
         }
     }
 }

@@ -3,48 +3,53 @@ using Core;
 using DataAccess.Base;
 using DataAccess.Interface;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace DataAccess.Implement
 {
     public class CategoryRepository : ICategoryRepository
     {
-        private readonly EStoreContext _context;
+        private readonly IDbContextFactory<EStoreContext> _contextFactory;
 
-        public CategoryRepository(EStoreContext context)
+        public CategoryRepository(IDbContextFactory<EStoreContext> contextFactory)
         {
-            _context = context;
+            _contextFactory = contextFactory;
         }
 
         public async Task<bool> AddCategoryAsync(Category category)
         {
-            var exist = await _context.Categories.FirstOrDefaultAsync(c => c.CategoryName == category.CategoryName);
+            using var _context = _contextFactory.CreateDbContext();
+            var exist = await _context.Categories
+                .FirstOrDefaultAsync(c => c.CategoryName == category.CategoryName);
 
             if (exist != null)
             {
                 throw new Exception("Category already exists");
             }
+
             _context.Categories.Add(category);
-            await _context.SaveChangesAsync();
-            return true;
+            return await _context.SaveChangesAsync() > 0;
         }
 
         public async Task<bool> DeleteCategory(int categoryId)
         {
+            using var _context = _contextFactory.CreateDbContext();
             var exist = await _context.Categories.FindAsync(categoryId);
-            if (exist != null)
-            {
-                _context.Categories.Remove(exist);
-                await _context.SaveChangesAsync();
-                return true;
-            }
-            else
+            if (exist == null)
             {
                 return false;
             }
+
+            _context.Categories.Remove(exist);
+            return await _context.SaveChangesAsync() > 0;
         }
 
         public async Task<PaginatedList<Category>> GetCategories(string name, int pageNumber, int pageSize)
         {
+            using var _context = _contextFactory.CreateDbContext();
             var query = _context.Categories.AsQueryable();
             if (!string.IsNullOrWhiteSpace(name))
             {
@@ -56,6 +61,7 @@ namespace DataAccess.Implement
 
         public async Task<PaginatedList<Category>> GetCategories(int pageNumber, int pageSize)
         {
+            using var _context = _contextFactory.CreateDbContext();
             var query = _context.Categories.AsQueryable();
             query = query.OrderByDescending(x => x.CategoryId);
             return await PaginatedList<Category>.CreateAsync(query, pageNumber, pageSize);
@@ -63,6 +69,7 @@ namespace DataAccess.Implement
 
         public async Task<IEnumerable<Category>> GetCategories(string name = "")
         {
+            using var _context = _contextFactory.CreateDbContext();
             var query = _context.Categories.AsQueryable();
             if (!string.IsNullOrWhiteSpace(name))
             {
@@ -74,28 +81,29 @@ namespace DataAccess.Implement
 
         public async Task<IEnumerable<Category>> GetCategories()
         {
-            return await _context.Categories.ToListAsync();
+            using var _context = _contextFactory.CreateDbContext();
+            return await _context.Categories
+                .OrderByDescending(x => x.CategoryId)
+                .ToListAsync();
         }
 
         public async Task<Category> GetCategory(int categoryId)
         {
+            using var _context = _contextFactory.CreateDbContext();
             return await _context.Categories.FindAsync(categoryId);
         }
 
         public async Task<bool> UpdateCategory(Category category)
         {
+            using var _context = _contextFactory.CreateDbContext();
             var exist = await _context.Categories.FindAsync(category.CategoryId);
-
-            if (exist != null)
-            {
-                _context.Entry(exist).CurrentValues.SetValues(category);
-                await _context.SaveChangesAsync();
-                return true;
-            }
-            else
+            if (exist == null)
             {
                 return false;
             }
+
+            _context.Entry(exist).CurrentValues.SetValues(category);
+            return await _context.SaveChangesAsync() > 0;
         }
     }
 }

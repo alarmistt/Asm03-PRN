@@ -49,7 +49,16 @@ namespace Services.Implement
 
         public async Task<bool> UpdateMember(MemberDTO memberDto)
         {
-            memberDto.Password = this.HashPassword(memberDto.Password);
+            if (memberDto.Password != null)
+            {
+                memberDto.Password = this.HashPassword(memberDto.Password);
+            }
+            
+            else if (memberDto.Password == null)
+            {
+                var memberOld = await _memberRepository.GetMember(memberDto.MemberId);
+                memberDto.Password = memberOld.Password;
+            }
 
             var member = _mapper.Map<Member>(memberDto);
 

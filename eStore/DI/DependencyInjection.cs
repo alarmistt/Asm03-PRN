@@ -1,4 +1,4 @@
-﻿using CloudinaryDotNet;
+using CloudinaryDotNet;
 using DataAccess.Base;
 using eStore.Config;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -9,6 +9,7 @@ using Services.Implement;
 using Services.Interface;
 using StackExchange.Redis;
 using System.Text;
+using DataAccess.Base;
 
 namespace eStore.DI
 {
@@ -21,6 +22,8 @@ namespace eStore.DI
             services.AddAuthenticationStateProvider();
             services.AddRedis(configuration);
         }
+
+
         public static void AddRedis(this IServiceCollection services, IConfiguration configuration)
         {
             RedisConfiguration redisSetting = new RedisConfiguration();
@@ -59,8 +62,8 @@ namespace eStore.DI
            
         public static void AddDatabase(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddDbContext<EStoreContext>(options =>
-            options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
+            services.AddDbContextFactory<EStoreContext>(options =>
+                options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
         }
         public static void AddAuthenticationStateProvider(this IServiceCollection services)
         {
