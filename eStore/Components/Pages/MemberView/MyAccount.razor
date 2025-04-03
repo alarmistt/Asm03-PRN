@@ -206,7 +206,11 @@ else
         {
             if (!string.IsNullOrWhiteSpace(newPassword))
             {
-                member.Password = newPassword; // Only update if user enters a new password
+                member.Password = newPassword;
+            }
+            else
+            {
+                member.Password = null;
             }
             await MemberService.UpdateMember(member);
             NavigationManager.NavigateTo("/myaccount");

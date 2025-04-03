@@ -12,7 +12,8 @@ namespace Services.Models.DTO
 
         [Key]
         public int MemberId { get; set; }
-        [Required]
+        [Required(ErrorMessage = "Email is required.")]
+        [EmailAddress(ErrorMessage = "Invalid email address.")]
         public string Email { get; set; }
 
         [Required]

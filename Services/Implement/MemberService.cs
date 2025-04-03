@@ -49,12 +49,12 @@ namespace Services.Implement
 
         public async Task<bool> UpdateMember(MemberDTO memberDto)
         {
-            if (memberDto.Password != null)
+            if (!string.IsNullOrWhiteSpace(memberDto.Password))
             {
                 memberDto.Password = this.HashPassword(memberDto.Password);
             }
             
-            else if (memberDto.Password == null)
+            else if (string.IsNullOrWhiteSpace(memberDto.Password))
             {
                 var memberOld = await _memberRepository.GetMember(memberDto.MemberId);
                 memberDto.Password = memberOld.Password;
