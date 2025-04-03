@@ -202,12 +202,10 @@
             {
                 if (!string.IsNullOrWhiteSpace(newPassword))
                 {
-                    member.Password = newPassword; // Only update if user enters a new password
+                    member.Password = newPassword;
                 }
                 else
                 {
-                    // Keep the current password if nothing entered
-                    var existingMember = await MemberService.GetMember(MemberId.Value);
                     member.Password = null;
                 }
                 await MemberService.UpdateMember(member);
