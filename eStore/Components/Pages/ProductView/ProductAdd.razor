@@ -5,6 +5,7 @@
 @inject IProductService ProductService
 @inject ICategoryService CategoryService
 @inject NavigationManager NavigationManager
+@inject IJSRuntime JS
 @rendermode InteractiveServer
 
 <div class="container-fluid my-5 px-4">
@@ -180,7 +181,6 @@
     {
         try
         {
-            // Final validation before submit
             if (product.CategoryId <= 0)
             {
                 categoryError = "Please select a valid category.";

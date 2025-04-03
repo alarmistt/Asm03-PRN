@@ -1,14 +1,13 @@
 ﻿
-
 @page "/products"
 @using BusinessObject.Entities
 @using Services.Interface
 @using Services.Models.DTO
+@using Microsoft.AspNetCore.SignalR.Client
 @inject IProductService ProductService
 @inject ICategoryService CategoryService
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JS
-@using Microsoft.AspNetCore.SignalR.Client
 @rendermode InteractiveServer
 
 <div class="container my-5">
@@ -19,7 +18,7 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <h3 class="mb-0 fw-normal">Product Management</h3>
                         <button class="btn btn-light btn-sm px-4 fw-medium shadow-sm" style="border-radius: 20px; display: flex; align-items: center; justify-content: center;" @onclick="CreateProduct">
-                            <span class="me-多元2">+</span> Add Product
+                            <span class="me-2">+</span> Add Product
                         </button>
                     </div>
                 </div>
@@ -159,7 +158,6 @@
     </div>
 </div>
 
-<!-- Delete Confirmation Modal -->
 @if (showDeleteModal)
 {
     <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5);">
@@ -195,8 +193,7 @@
     </div>
 }
 
-<!-- Include FontAwesome for pagination icons -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2Lw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
 <style>
     .table-row:hover {
@@ -350,6 +347,7 @@
                     var (products, count) = await ProductService.GetAllProductsPageAsync(currentPage, pageSize);
                     filteredProducts = products.ToList();
                     totalCount = count;
+                    await JS.InvokeVoidAsync("console.log", $"Loaded {filteredProducts.Count} products (no filter)");
                 }
                 else
                 {
@@ -362,16 +360,46 @@
                     );
                     filteredProducts = products.ToList();
                     totalCount = count;
+                    await JS.InvokeVoidAsync("console.log", $"Loaded {filteredProducts.Count} products (with filter)");
                 }
+
+                // Kiểm tra nếu trang hiện tại rỗng và không phải trang 1
+                while (filteredProducts.Count == 0 && currentPage > 1)
+                {
+                    currentPage--; // Giảm trang về trước
+                    if (string.IsNullOrEmpty(searchName) && string.IsNullOrEmpty(searchPriceText) && selectedCategoryId == 0)
+                    {
+                        var (products, count) = await ProductService.GetAllProductsPageAsync(currentPage, pageSize);
+                        filteredProducts = products.ToList();
+                        totalCount = count;
+                    }
+                    else
+                    {
+                        var (products, count) = await ProductService.FilterProductsAsync(
+                            currentPage,
+                            pageSize,
+                            searchName,
+                            searchPriceText,
+                            selectedCategoryId == 0 ? null : selectedCategoryId
+                        );
+                        filteredProducts = products.ToList();
+                        totalCount = count;
+                    }
+                    await JS.InvokeVoidAsync("console.log", $"Page {currentPage} loaded with {filteredProducts.Count} products after auto-adjustment");
+                }
+
                 StateHasChanged();
             });
         }
         catch (Exception ex)
         {
             deleteErrorMessage = $"Error loading products: {ex.Message}";
+            await JS.InvokeVoidAsync("console.log", $"LoadProducts error: {ex.Message}");
             StateHasChanged();
         }
     }
+
+    
 
     private async Task ChangePage(int page)
     {
@@ -437,12 +465,20 @@
 
         hubConnection.On("ReceiveMessage", async () =>
         {
-            Console.WriteLine("🔄 Product list updated!");
+            await JS.InvokeVoidAsync("console.log", "🔄 Product list updated via SignalR!");
             await LoadProducts();
             StateHasChanged();
         });
 
-        await hubConnection.StartAsync();
+        try
+        {
+            await hubConnection.StartAsync();
+            await JS.InvokeVoidAsync("console.log", "SignalR connected in products");
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("console.log", $"SignalR connection failed in products: {ex.Message}");
+        }
     }
 
     private IEnumerable<int> GetPageNumbers()
