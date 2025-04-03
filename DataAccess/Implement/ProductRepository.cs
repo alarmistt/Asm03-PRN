@@ -16,13 +16,16 @@ namespace DataAccess.Implement
         }
         public async Task<IEnumerable<Product>> GetAllAsync()
         {
-            return await _context.Products.ToListAsync();
+            return await _context.Products
+                .Include(p => p.Category)
+                .ToListAsync();
         }
 
         public async Task<(IEnumerable<Product> Products, int TotalCount)> GetAllPageAsync(int pageNumber, int pageSize)
         {
             int totalCount = await _context.Products.CountAsync();
             var products = await _context.Products
+                .Include(p => p.Category)
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
@@ -62,6 +65,7 @@ namespace DataAccess.Implement
             existingProduct.ProductName = product.ProductName;
             existingProduct.Weight = product.Weight;
             existingProduct.UnitPrice = product.UnitPrice;
+            existingProduct.ImageUrl = product.ImageUrl;
             existingProduct.UnitsInStock = product.UnitsInStock;
 
             Console.WriteLine($"Updated: CategoryId={existingProduct.CategoryId}, Name={existingProduct.ProductName}, " +

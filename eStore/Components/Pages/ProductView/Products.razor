@@ -79,6 +79,7 @@
                                 <thead>
                                     <tr>
                                         <th scope="col" class="py-3">ID</th>
+                                        <th scope="col" class="py-3">Image</th>
                                         <th scope="col" class="py-3">Category</th>
                                         <th scope="col" class="py-3">Name</th>
                                         <th scope="col" class="py-3">Weight</th>
@@ -92,6 +93,16 @@
                                     {
                                         <tr class="table-row">
                                             <td class="fw-medium" style="color: #4B5EAA;">@product.ProductId</td>
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(product.ImageUrl))
+                                                {
+                                                    <img src="@product.ImageUrl" alt="@product.ProductName" style="max-width: 50px; max-height: 50px; object-fit: cover; border-radius: 4px;" />
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">No Image</span>
+                                                }
+                                            </td>
                                             <td>@product.Category?.CategoryName</td>
                                             <td>@product.ProductName</td>
                                             <td>@product.Weight</td>
@@ -363,10 +374,9 @@
                     await JS.InvokeVoidAsync("console.log", $"Loaded {filteredProducts.Count} products (with filter)");
                 }
 
-                // Kiểm tra nếu trang hiện tại rỗng và không phải trang 1
                 while (filteredProducts.Count == 0 && currentPage > 1)
                 {
-                    currentPage--; // Giảm trang về trước
+                    currentPage--;
                     if (string.IsNullOrEmpty(searchName) && string.IsNullOrEmpty(searchPriceText) && selectedCategoryId == 0)
                     {
                         var (products, count) = await ProductService.GetAllProductsPageAsync(currentPage, pageSize);
@@ -398,8 +408,6 @@
             StateHasChanged();
         }
     }
-
-    
 
     private async Task ChangePage(int page)
     {
@@ -445,7 +453,14 @@
                 return;
             }
 
-            await ProductService.DeleteProductAsync(productIdToDelete);
+            var productToDelete = await ProductService.GetProductByIdAsync(productIdToDelete);
+            if (productToDelete != null)
+            {
+                productToDelete.DeletedDate = DateTimeOffset.Now; // Gán ngày hiện tại
+                await ProductService.UpdateProductAsync(productToDelete); // Cập nhật vào DB
+            }
+
+            await ProductService.DeleteProductAsync(productIdToDelete); // Xóa sản phẩm
             await LoadProducts();
             showDeleteModal = false;
         }

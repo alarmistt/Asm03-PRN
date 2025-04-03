@@ -35,7 +35,10 @@ public class MappingProfile : Profile
     {
         CreateMap<Category, CategoryDTO>().ReverseMap();
         CreateMap<Member, MemberDTO>().ReverseMap();
-        CreateMap<Product, ProductDTO>().ReverseMap();
+        CreateMap<Product, ProductDTO>()
+            .ForMember(dest => dest.Category,
+                      opt => opt.MapFrom(src => src.Category)) 
+            .ReverseMap();
         CreateMap(typeof(PaginatedList<>), typeof(PaginatedList<>)).ConvertUsing(typeof(PaginatedListConverter<,>));
     }
 }

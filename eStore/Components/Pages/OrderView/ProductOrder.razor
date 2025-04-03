@@ -1,4 +1,6 @@
-﻿@page "/productsOrder"
+﻿
+
+@page "/productsOrder"
 @using Services.Models.DTO
 @using Services.Interface
 @inject IProductService ProductService
@@ -6,7 +8,6 @@
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JS
 @using Microsoft.AspNetCore.SignalR.Client
-@using Services.Models.DTO
 @rendermode InteractiveServer
 
 <!-- Include FontAwesome for the product icon -->
@@ -63,9 +64,16 @@
                         <div class="col">
                             <div class="card h-100 border-0 shadow-sm" style="border-radius: 15px; background-color: #fff;">
                                 <div class="position-relative d-flex justify-content-center pt-4">
-                                    <div class="image-circle" style="width: 150px; height: 150px; border-radius: 50%; background: linear-gradient(135deg, #4B5EAA, #6B7280); display: flex; align-items: center; justify-content: center; border: 5px solid #4B5EAA;">
-                                        <i class="fas fa-spray-can" style="font-size: 80px; color: #ffffff;"></i>
-                                    </div>
+                                    @if (!string.IsNullOrEmpty(product.ImageUrl))
+                                    {
+                                        <img src="@product.ImageUrl" alt="@product.ProductName" style="width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 5px solid #4B5EAA;" />
+                                    }
+                                    else
+                                    {
+                                        <div class="image-circle" style="width: 150px; height: 150px; border-radius: 50%; background: linear-gradient(135deg, #4B5EAA, #6B7280); display: flex; align-items: center; justify-content: center; border: 5px solid #4B5EAA;">
+                                            <i class="fas fa-spray-can" style="font-size: 80px; color: #ffffff;"></i>
+                                        </div>
+                                    }
                                 </div>
                                 <div class="card-body text-center">
                                     <h5 class="card-title" style="color: #1f2937; font-weight: 600;">@product.ProductName</h5>
@@ -204,7 +212,6 @@
         background: linear-gradient(135deg, #4B5EAA, #6B7280);
         color: #ffffff;
         border-color: #4B5EAA;
-        /* box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15); */
     }
 
     .custom-pagination .page-item.disabled .page-link {

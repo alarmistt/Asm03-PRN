@@ -74,6 +74,19 @@
                     }
                 </div>
 
+                <div class="mb-4">
+                    <label for="ImageUrl" class="form-label fw-medium text-muted">Product Image</label>
+                    <InputFile id="ImageUrl" class="form-control shadow-sm" OnChange="HandleImageUpload" style="border-radius: 8px;" />
+                    @if (!string.IsNullOrEmpty(product.ImageUrl))
+                    {
+                        <img src="@product.ImageUrl" alt="Preview" style="max-width: 200px; max-height: 200px; margin-top: 10px; border-radius: 8px;" />
+                    }
+                    @if (!string.IsNullOrEmpty(imageError))
+                    {
+                        <div class="text-danger small mt-1">@imageError</div>
+                    }
+                </div>
+
                 <div class="d-flex justify-content-end gap-3">
                     <button type="submit" class="btn btn-success px-4 fw-medium" style="border-radius: 20px;">
                         <i class="bi bi-save me-2"></i> Save
@@ -124,6 +137,7 @@
     private string weightError = "";
     private string unitPriceError = "";
     private string unitsInStockError = "";
+    private string imageError = "";
 
     protected override async Task OnInitializedAsync()
     {
@@ -136,7 +150,8 @@
                     ProductName = "",
                     Weight = "",
                     UnitPrice = 0,
-                    UnitsInStock = 0
+                    UnitsInStock = 0,
+                    ImageUrl = ""
                 };
         }
         catch (Exception ex)
@@ -175,6 +190,46 @@
         int.TryParse(e.Value?.ToString(), out int value);
         unitsInStockError = value < 1 ? "Units In Stock must be 1 or greater." : "";
         StateHasChanged();
+    }
+
+    private async Task HandleImageUpload(InputFileChangeEventArgs e)
+    {
+        try
+        {
+            var file = e.File;
+            if (file != null)
+            {
+                if (file.Size > 5 * 1024 * 1024)
+                {
+                    imageError = "Image size must be less than 5MB.";
+                    StateHasChanged();
+                    return;
+                }
+
+                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif" };
+                var extension = Path.GetExtension(file.Name).ToLower();
+                if (!allowedExtensions.Contains(extension))
+                {
+                    imageError = "Only .jpg, .jpeg, .png, and .gif files are allowed.";
+                    StateHasChanged();
+                    return;
+                }
+
+                using var stream = file.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024);
+                using var memoryStream = new MemoryStream();
+                await stream.CopyToAsync(memoryStream);
+                var bytes = memoryStream.ToArray();
+                product.ImageUrl = $"data:image/{extension.TrimStart('.')};base64,{Convert.ToBase64String(bytes)}";
+
+                imageError = "";
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            imageError = $"Error uploading image: {ex.Message}";
+            StateHasChanged();
+        }
     }
 
     private async Task HandleValidSubmit()

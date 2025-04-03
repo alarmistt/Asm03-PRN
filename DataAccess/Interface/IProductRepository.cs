@@ -9,7 +9,7 @@ namespace DataAccess.Interface
 {
     public interface IProductRepository
     {
-        Task<(IEnumerable<Product> Products, int TotalCount)> GetAllPageAsync(int pageNumber, int pageSize); // Cập nhật để hỗ trợ phân trang
+        Task<(IEnumerable<Product> Products, int TotalCount)> GetAllPageAsync(int pageNumber, int pageSize);
         Task<IEnumerable<Product>> GetAllAsync();
         Task<Product> GetByIdAsync(int id);
         Task<Product> AddAsync(Product product);
