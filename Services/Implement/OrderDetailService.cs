@@ -23,9 +23,9 @@ namespace Services.Implement
             return await _orderDetailRepository.GetAllAsync();
         }
 
-        public async Task<OrderDetail?> GetByIdAsync(int orderId, int productId)
+        public async Task<OrderDetail?> GetByIdAsync(int orderId)
         {
-            return await _orderDetailRepository.GetByIdAsync(orderId, productId);
+            return await _orderDetailRepository.GetByIdAsync(orderId);
         }
 
         public async Task AddAsync(OrderDetail orderDetail)
@@ -40,10 +40,10 @@ namespace Services.Implement
             await _orderDetailRepository.UpdateAsync(orderDetail);
         }
 
-        public async Task DeleteAsync(int orderId, int productId)
+        public async Task DeleteAsync(int orderId)
         {
             // Business logic có thể được thêm vào đây nếu cần
-            await _orderDetailRepository.DeleteAsync(orderId, productId);
+            await _orderDetailRepository.DeleteAsync(orderId);
         }
     }
 }

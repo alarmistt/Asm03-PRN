@@ -1,4 +1,5 @@
 ﻿using BusinessObject.Entities;
+using Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,5 +20,7 @@ namespace DataAccess.Interface
         Task<List<Order>> GetOrdersByDateRange(DateTime startDate, DateTime endDate);
         Task<List<Order>> GetPendingOrdersByDate(DateTime date);
         Task UpdateOrderStatus(int orderId, string newStatus);
+        Task<PaginatedList<Order>> GetOrders(int pageNumber, int pageSize);
+        Task<PaginatedList<Order>> GetOrdersByMemberId(int memberId, int pageNumber, int pageSize);
     }
 }

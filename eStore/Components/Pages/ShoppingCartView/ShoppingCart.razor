@@ -1,0 +1,407 @@
+﻿@page "/cart"
+@using BusinessObject.Entities
+@using Services.Interface
+@using Services.Models
+@using Services.Models.DTO
+@inject ICartService CartService
+@inject JwtAuthenticationStateProvider AuthStateProvider
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<style>
+    /*     .cart-container {
+            max-width: 1100px;
+            margin: 30px auto;
+            background: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            font-family: 'Arial', sans-serif;
+        }
+
+        h3 {
+            text-align: center;
+            color: #ff5722;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #fafafa;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+            .table thead {
+                background: #ff7043;
+                color: white;
+                font-size: 16px;
+            }
+
+            .table th, .table td {
+                padding: 15px;
+                border-bottom: 1px solid #ddd;
+                text-align: center;
+            }
+
+            .table tr:last-child td {
+                border-bottom: none;
+            }
+
+            .table img {
+                width: 70px;
+                height: 70px;
+                object-fit: cover;
+                border-radius: 5px;
+            }
+
+        .btn-danger {
+            background: #ff1744;
+            border: none;
+            padding: 8px 15px;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: 0.3s;
+        }
+
+            .btn-danger:hover {
+                background: #d50000;
+            }
+
+        .btn-warning {
+            background: #ff9800;
+            border: none;
+            padding: 12px 18px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 5px;
+            display: block;
+            margin: 20px auto;
+            transition: 0.3s;
+        }
+
+            .btn-warning:hover {
+                background: #e68900;
+            }
+
+        .total-price {
+            text-align: right;
+            font-size: 20px;
+            font-weight: bold;
+            color: #d32f2f;
+            margin-top: 20px;
+        }
+
+        .empty-cart {
+            text-align: center;
+            font-size: 18px;
+            color: #888;
+            padding: 50px 0;
+        } */
+    .cart-container {
+        max-width: 700px;
+        margin: 20px auto;
+        font-family: 'Arial', sans-serif;
+        padding: 20px;
+        background-color: #f9f9f9;
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        text-align: center;
+    }
+
+    .cart-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 12px 20px;
+        margin-bottom: 15px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        transition: all 0.3s ease;
+        max-width: 80%;
+        margin: 0 auto;
+        border: 1px solid #e0e0e0;
+    }
+
+        .cart-item:hover {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            background-color: #f8f8f8;
+        }
+
+        .cart-item img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            padding: 5px;
+        }
+
+    .cart-item-info {
+        flex-grow: 1;
+        padding: 0 15px;
+    }
+
+    .cart-item-title {
+        font-size: 16px;
+        font-weight: bold;
+        color: #333;
+        line-height: 1.4;
+    }
+
+    .cart-item-quantity {
+        display: flex;
+        align-items: center;
+        gap: 15px; /* Tăng khoảng cách giữa các nút */
+    }
+
+    .cart-quantity-btn {
+        width: 30px; /* Đảm bảo các nút có kích thước hợp lý */
+        height: 30px;
+        border-radius: 50%; /* Hình tròn */
+        border: 1px solid #FF5722;
+        background-color: #fff;
+        color: #FF5722;
+        font-size: 18px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.3s, color 0.3s;
+    }
+
+        .cart-quantity-btn:hover {
+            background-color: #FF5722;
+            color: white;
+        }
+
+    .cart-price {
+        font-size: 16px;
+        font-weight: bold;
+        color: #FF5722;
+        text-align: right;
+        min-width: 80px;
+    }
+
+    .cart-delete {
+        cursor: pointer;
+        font-size: 20px;
+        color: #999;
+        transition: color 0.3s;
+    }
+
+        .cart-delete:hover {
+            color: #FF5722;
+        }
+
+    .empty-cart {
+        font-size: 18px;
+        color: #888;
+        text-align: center;
+        margin-top: 40px;
+        font-weight: bold;
+    }
+
+    .cart-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 15px;
+        border-top: 1px solid #ddd;
+        max-width: 80%;
+        margin: 0 auto;
+    }
+
+        .cart-footer .total-price {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .cart-footer .checkout-btn {
+            padding: 12px 20px;
+            background-color: #FF5722;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+            .cart-footer .checkout-btn:hover {
+                background-color: #e64a19;
+            }
+
+    /* Thêm các thay đổi cho nút checkbox */
+    /* Thêm các thay đổi cho nút checkbox */
+    .cart-item input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%; /* Hình tròn */
+        border: 2px solid #FF5722;
+        background-color: #fff;
+        position: relative; /* Để dễ dàng căn chỉnh nút bên trong */
+        transition: background-color 0.3s, border-color 0.3s;
+    }
+
+        .cart-item input[type="checkbox"]:checked {
+            background-color: #FF5722; /* Màu nền khi checkbox được chọn */
+            border-color: #FF5722;
+        }
+
+            /* Khi checkbox được chọn, tạo nút tròn nhỏ màu đen bên trong */
+            .cart-item input[type="checkbox"]:checked::before {
+                content: "";
+                position: absolute;
+                top: 3px;
+                left: 3px;
+                width: 10px;
+                height: 10px;
+                background-color: black;
+                border-radius: 50%; /* Nút tròn nhỏ */
+            }
+
+</style>
+
+
+@* <div class="cart-container">
+    <h3>🛒 Giỏ hàng của bạn</h3>
+
+    @if (Cart == null || Cart.Items.Count == 0)
+    {
+        <p class="empty-cart">Giỏ hàng trống, hãy thêm sản phẩm ngay!</p>
+    }
+    else
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Sản phẩm</th>
+                    <th>Giá</th>
+                    <th>Số lượng</th>
+                    <th>Tổng</th>
+                    <th>Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Cart.Items)
+                {
+                    <tr>
+                        <td>@item.ProductName</td>
+                        <td>@item.Price.ToString("C") </td>
+                        <td>@item.Quantity</td>
+                        <td>@((item.Price * item.Quantity).ToString("C") )</td>
+                        <td>
+                            <button class="btn btn-danger" @onclick="() => RemoveFromCart(item.ProductId)">Xoá</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <div class="total-price">
+            Tổng tiền: @Cart.Items.Sum(i => i.Price * i.Quantity).ToString("C") đ
+        </div>
+
+        <button class="btn btn-warning" @onclick="ClearCart">🗑 Xoá toàn bộ giỏ hàng</button>
+    }
+</div> *@
+@if (Cart == null || Cart.Items.Count == 0)
+{
+    <p class="empty-cart">Giỏ hàng trống, hãy thêm sản phẩm ngay!</p>
+}
+else
+{
+    <div class="cart-header">Giỏ hàng của bạn</div>
+
+    @foreach (var item in Cart.Items)
+    {
+        <div class="cart-item">
+            <input type="checkbox">
+            <img src="" alt="@item.ProductDTO.ProductName">
+
+            <div class="cart-item-info">
+                <div class="cart-item-title">@item.ProductDTO.ProductName</div>
+
+                <div class="cart-item-quantity">
+                    <button class="cart-quantity-btn" @onclick="() => DecreaseQuantity(item.ProductDTO.ProductId)">➖</button>
+                    <span>@item.Quantity</span>
+                    <button class="cart-quantity-btn" @onclick="() => IncreaseQuantity(item.ProductDTO.ProductId)">➕</button>
+                </div>
+            </div>
+
+            <div class="cart-price">@item.ProductDTO.UnitPrice.ToString("C") đ</div>
+
+            <div class="cart-delete" @onclick="() => RemoveFromCart(item.ProductDTO.ProductId)">🗑</div>
+        </div>
+    }
+
+    <div class="cart-footer">
+        <div class="total-price">
+            Tổng tiền: @Cart.Items.Sum(i => i.ProductDTO.UnitPrice * i.Quantity).ToString("N0") đ
+        </div>
+        <button class="checkout-btn" @onclick="CreateOrderFromCartAsync">Thanh toán</button>
+    </div>
+}
+
+
+
+
+
+
+
+@code {
+    private ShoppingCartDTO? Cart;
+    private int? memberId;
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            memberId = await AuthStateProvider.GetIdMemberAsync();
+        }
+        await LoadCart();
+    }
+
+    private async Task IncreaseQuantity(int productId)
+    {
+        await CartService.UpdateCartItemQuantityAsync(memberId.ToString(), productId, 1); // Tăng số lượng lên 1
+        await LoadCart(); // Load lại giỏ hàng sau khi cập nhật
+    }
+
+    private async Task DecreaseQuantity(int productId)
+    {
+        await CartService.UpdateCartItemQuantityAsync(memberId.ToString(), productId, -1); // Giảm số lượng đi 1
+        await LoadCart(); // Load lại giỏ hàng sau khi cập nhật
+    }
+
+    private async Task LoadCart()
+    {
+        Cart = await CartService.GetCartAsync(memberId.ToString()); // Thay "user123" bằng user hiện tại
+    }
+
+    private async Task RemoveFromCart(int productId)
+    {
+        await CartService.RemoveFromCartAsync(memberId.ToString(), productId);
+        await LoadCart();
+    }
+
+    private async Task ClearCart()
+    {
+        await CartService.ClearCartAsync(memberId.ToString());
+        await LoadCart();
+    }
+    private async Task CreateOrderFromCartAsync()
+    {
+        await CartService.CreateOrderFromCartAsync(memberId.ToString());
+        NavigationManager.NavigateTo("/order-confirmation");
+    }
+}

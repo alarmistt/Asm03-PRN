@@ -1,0 +1,232 @@
+﻿@page "/order/{OrderId:int}"
+@using BusinessObject.Entities
+@using Services.Interface
+@inject IOrderService OrderService
+@inject NavigationManager NavigationManager
+
+<style>
+    .status-pending {
+        color: #ffcc00; /* Màu vàng cho Pending */
+        font-weight: bold;
+    }
+
+    .status-processing {
+        color: #007bff; /* Màu xanh dương cho Processing */
+        font-weight: bold;
+    }
+
+    .status-completed {
+        color: #28a745; /* Màu xanh lá cho Completed */
+        font-weight: bold;
+    }
+
+    .status-cancelled {
+        color: #dc3545; /* Màu đỏ cho Cancelled */
+        font-weight: bold;
+    }
+
+    .status-default {
+        color: #6c757d; /* Màu xám cho status mặc định */
+        font-weight: normal;
+    }
+
+    .order-container {
+        width: 75%;
+        margin: 0 auto;
+        padding: 30px;
+        font-family: 'Roboto', sans-serif;
+        background-color: #f3f7fb;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    h3 {
+        text-align: center;
+        font-size: 28px;
+        color: #2C3E50;
+        margin-bottom: 30px;
+        font-weight: 500;
+    }
+
+    .order-summary {
+        background-color: #fff;
+        padding: 25px;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        margin-bottom: 30px;
+    }
+
+        .order-summary p {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+
+        .order-summary strong {
+            font-weight: bold;
+            color: #2980B9;
+        }
+
+    .order-info {
+        padding: 20px;
+        border-radius: 8px;
+        background-color: #ecf5f9;
+        box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.05);
+    }
+
+    .order-details {
+        margin-top: 40px;
+        padding-top: 20px;
+        border-top: 2px dashed #ddd;
+    }
+
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 30px;
+        background-color: #fff;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+        .table th,
+        .table td {
+            padding: 15px 20px;
+            text-align: left;
+            font-size: 16px;
+            color: #555;
+        }
+
+        .table th {
+            background-color: #2980B9;
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .table td {
+            background-color: #f9f9f9;
+            color: #333;
+        }
+
+        .table tr:nth-child(even) td {
+            background-color: #f2f2f2;
+        }
+
+        .table tr:hover td {
+            background-color: #f5f8ff;
+            cursor: pointer;
+            transform: scale(1.02);
+            transition: all 0.3s ease-in-out;
+        }
+
+    .order-total {
+        font-size: 20px;
+        font-weight: 600;
+        margin-top: 30px;
+        text-align: right;
+        color: #2980B9;
+    }
+
+    .order-info p {
+        font-size: 18px;
+    }
+
+    .order-summary strong {
+        color: #2c3e50;
+    }
+</style>
+
+
+@code {
+    [Parameter] public int OrderId { get; set; }
+    private Order order;
+    private decimal total;
+    private decimal sumTotal;
+    protected override async Task OnInitializedAsync()
+    {
+        // Lấy dữ liệu đơn hàng từ API hoặc Service
+        order = await OrderService.GetOrderByIdAsync(OrderId);
+        sumTotal = order.CalculateTotalAmount();
+        total = sumTotal - order.Freight;
+    }
+    private string GetStatusClass(string status)
+    {
+        return status switch
+        {
+            "Pending" => "status-pending",
+            "Processing" => "status-processing",
+            "Completed" => "status-completed",
+            "Cancelled" => "status-cancelled",
+            _ => "status-default" // Nếu status không hợp lệ, áp dụng mặc định
+        };
+    }
+}
+
+@if (order != null)
+{
+    <div class="order-container">
+        <h3>Order Details</h3>
+
+        <div class="order-summary">
+            <div class="order-info">
+                <p><strong>Order ID:</strong> @order.OrderId</p>
+                <p><strong>Company Name:</strong> @order.Member?.CompanyName</p>
+                <p><strong>Address:</strong> @($"{order.Member?.City}, {order.Member?.Country}")</p>
+                <p><strong>Order Date:</strong> @order.OrderDate.ToString("MM/dd/yyyy")</p>
+                <p><strong>Required Date:</strong> @order.RequiredDate.ToString("MM/dd/yyyy")</p>
+                <p><strong>Shipped Date:</strong> @order.ShippedDate?.ToString("MM/dd/yyyy")</p>
+                <p>
+                    <strong>Status:</strong>
+                    <span class="@GetStatusClass(order.Status)">
+                        @order.Status
+                    </span>
+                </p>
+
+            </div>
+        </div>
+
+        <div class="order-details">
+            <h4>Order Items</h4>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Unit Price</th>
+                        <th>Quantity</th>
+                        <th>Discount</th>
+                        <th>Total Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var detail in order.OrderDetails)
+                    {
+                        <tr>
+                            <td>@detail.Product?.ProductName</td>
+                            <td>@detail.Product.UnitPrice.ToString("C")</td>
+                            <td>@detail.Quantity</td>
+                            <td>@(detail.Discount * 100)%</td>
+                            <td>@detail.UnitPrice.ToString("C")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="order-total">
+            <p><strong>Total Order:</strong> @total.ToString("C")</p>
+        </div>
+        <div class="order-total">
+            <p><strong>Freight:</strong> @order.Freight.ToString("C")</p>
+        </div>
+        <div class="order-total">
+            <p><strong>Total Payment:</strong> @sumTotal.ToString("C")</p>
+        </div>
+    </div>
+}
+else
+{
+    <p>Loading order details...</p>
+}

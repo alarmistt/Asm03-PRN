@@ -1,63 +1,183 @@
 ﻿@page "/order/edit/{OrderId:int}"
 @using BusinessObject.Entities
 @using Services.Interface
+@using Services.Models.DTO
 @inject IOrderService OrderService
-@inject NavigationManager Navigation
+@inject IMemberService MemberService
+@inject IProductService ProductService
+@inject NavigationManager NavigationManager
 @rendermode InteractiveServer
-<PageTitle>Edit Order</PageTitle>
-<h3>Edit Order</h3>
 
-@if (order == null)
-{
-    <p>Loading...</p>
-}
-else
-{
-    <form @onsubmit="SaveOrder">
-        <label>Member ID:</label>
-        <input type="number" @bind="order.MemberId" />
-        <br />
-        <label>Order Date:</label>
-        <input type="date" @bind="order.OrderDate" />
-        <br />
-        <label>Required Date:</label>
-        <input type="date" @bind="order.RequiredDate" />
-        <br />
-        <label>Shipped Date:</label>
-        <input type="date" @bind="order.ShippedDate" />
-        <br />
-        <label>Freight:</label>
-        <input type="number" step="0.01" @bind="order.Freight" />
-        <br />
-        <button type="submit">Save</button>
-        <button @onclick="Cancel">Cancel</button>
-    </form>
-}
+<PageTitle>Edit Order</PageTitle>
+
+<div class="container mt-5">
+    <div class="card shadow-sm border-0 rounded bg-light">
+        <div class="card-header bg-primary text-white text-center py-3 rounded-top">
+            <h3 class="mb-0">Edit Order</h3>
+        </div>
+        <div class="card-body">
+            @if (order == null)
+            {
+                <p>Loading...</p>
+            }
+            else
+            {
+                <EditForm Model="order" OnValidSubmit="HandleValidSubmit">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+
+                    <div class="mb-3">
+                        <label for="memberId" class="form-label">Member</label>
+                        <InputSelect id="memberId" class="form-control" @bind-Value="order.MemberId">
+                            @foreach (var member in Members)
+                            {
+                                <option value="@member.MemberId">@member.CompanyName</option>
+                            }
+                        </InputSelect>
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Required Date</label>
+                        <InputDate class="form-control" @bind-Value="order.RequiredDate" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Shipped Date</label>
+                        <InputDate class="form-control" @bind-Value="order.ShippedDate" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Freight</label>
+                        <InputNumber class="form-control" @bind-Value="order.Freight" />
+                    </div>
+
+                    <h4>Order Details</h4>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Quantity</th>
+                                <th>Unit Price</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in TempOrderDetails)
+                            {
+                                <tr>
+                                    <td>@Products.FirstOrDefault(p => p.ProductId == item.ProductId)?.ProductName</td>
+                                    <td>@item.Quantity</td>
+                                    <td>@item.UnitPrice.ToString("C")</td>
+                                    <td>
+                                        <button type="button" class="btn btn-danger btn-sm" @onclick="() => RemoveTempOrderDetail(item)">Remove</button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label>Product</label>
+                            <InputSelect class="form-control" @bind-Value="newOrderDetail.ProductId" @onchange="UpdateUnitPrice">
+                                <option value="">-- Select Product --</option>
+                                @foreach (var product in Products)
+                                {
+                                    <option value="@product.ProductId">@product.ProductName</option>
+                                }
+                            </InputSelect>
+                        </div>
+                        <div class="col-md-3">
+                            <label>Quantity</label>
+                            <InputNumber class="form-control" @bind-Value="Quantity" />
+                        </div>
+                        <div class="col-md-3">
+                            <label>Unit Price</label>
+                            <span class="form-control-plaintext">@newOrderDetail.UnitPrice.ToString("C")</span>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="button" class="btn btn-success" @onclick="AddOrderDetail">Add</button>
+                        </div>
+                    </div>
+
+                    <br />
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancel</button>
+                </EditForm>
+            }
+        </div>
+    </div>
+</div>
 
 @code {
     [Parameter] public int OrderId { get; set; }
     private Order order;
+    private OrderDetail newOrderDetail = new();
+    private List<MemberDTO> Members = new();
+    private List<ProductDTO> Products = new();
+    private List<OrderDetail> TempOrderDetails = new();
+    private int Quantity
+    {
+        get => newOrderDetail.Quantity;
+        set
+        {
+            if (value >= 0)
+            {
+                newOrderDetail.Quantity = value;
+                UpdateUnitPrice();
+            }
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
         order = await OrderService.GetOrderByIdAsync(OrderId) ?? new Order();
+        Members = (await MemberService.GetMembers()).ToList();
+        Products = (await ProductService.GetAllProductsAsync()).ToList();
+        TempOrderDetails = order.OrderDetails.ToList();
     }
 
-    private async Task SaveOrder()
+    private void UpdateUnitPrice()
     {
-        if (order.OrderId == 0)
+        var selectedProduct = Products.FirstOrDefault(p => p.ProductId == newOrderDetail.ProductId);
+        if (selectedProduct != null)
         {
-            await OrderService.CreateOrderAsync(order);
+            newOrderDetail.UnitPrice = selectedProduct.UnitPrice * newOrderDetail.Quantity;
         }
-        else
+    }
+
+    private void RemoveTempOrderDetail(OrderDetail item)
+    {
+        TempOrderDetails.Remove(item);
+    }
+
+    private void AddOrderDetail()
+    {
+        if (newOrderDetail.ProductId > 0 && newOrderDetail.Quantity > 0)
         {
-            await OrderService.UpdateOrderAsync(order);
+            TempOrderDetails.Add(new OrderDetail
+                {
+                    ProductId = newOrderDetail.ProductId,
+                    Quantity = newOrderDetail.Quantity,
+                    UnitPrice = newOrderDetail.UnitPrice
+                });
+            newOrderDetail = new OrderDetail();
         }
-        Navigation.NavigateTo("/orders");
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        if (TempOrderDetails.Count == 0)
+        {
+            return;
+        }
+        order.OrderDetails = new List<OrderDetail>(TempOrderDetails);
+        await OrderService.UpdateOrderAsync(order);
+        NavigationManager.NavigateTo("/orders");
     }
 
     private void Cancel()
     {
-        Navigation.NavigateTo("/orders");
+        NavigationManager.NavigateTo("/orders");
     }
 }

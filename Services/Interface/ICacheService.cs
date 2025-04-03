@@ -5,5 +5,7 @@
         Task SetCacheResponseAsync(string key, object reponse, TimeSpan timeOut);
         Task<string?> GetCacheResponseAsync(string key);
         Task RemoveCacheResponseAsync(string pattern);
+
+        Task<T?> GetCacheObjectAsync<T>(string key);
     }
 }

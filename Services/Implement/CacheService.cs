@@ -58,6 +58,12 @@ namespace Services.Implement
                 AbsoluteExpirationRelativeToNow = timeOut
             });
         }
+
+        public async Task<T?> GetCacheObjectAsync<T>(string key)
+        {
+            var cacheResponse = await _distributedCache.GetStringAsync(key);
+            return cacheResponse == null ? default : JsonConvert.DeserializeObject<T>(cacheResponse);
+        }
     }
 }
 

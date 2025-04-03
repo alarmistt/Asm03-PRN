@@ -59,6 +59,7 @@ namespace Services.Implement
                     {
                         new Claim("id", account.MemberId.ToString()),
                         new Claim("email", account.Email ?? string.Empty),
+                        new Claim("companyName", account.CompanyName.ToString()),
                         new Claim(ClaimsIdentity.DefaultRoleClaimType, account.Role ?? "User")
                     };
             Console.WriteLine(account.Role ?? "User");
