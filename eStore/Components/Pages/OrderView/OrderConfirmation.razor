@@ -1,0 +1,298 @@
+﻿@* @page "/order-confirmation"
+@using Services.Interface
+@using Services.Models.DTO
+@using BusinessObject.Entities
+@inject ICacheService CacheService
+@inject JwtAuthenticationStateProvider AuthStateProvider
+@inject NavigationManager NavigationManager
+
+@if (order == null)
+{
+    <p>Đơn hàng không tồn tại hoặc đã hết hạn.</p>
+}
+else
+{
+    <h3>Xác nhận đơn hàng</h3>
+    <ul>
+        @foreach (var item in order.OrderDetails)
+        {
+            <li>@item.ProductId - @item.Quantity x @item.UnitPrice.ToString("N0") đ</li>
+        }
+    </ul>
+    <div class="total-price">
+        Tổng tiền: @totalPrice.ToString("N0") đ
+    </div>
+    <button @onclick="FinalizeOrder">Hoàn tất đơn hàng</button>
+}
+
+@code {
+    private Order? order;
+    private int? memberId;
+    private decimal totalPrice;
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            memberId = await AuthStateProvider.GetIdMemberAsync();
+        }
+        order = await CacheService.GetCacheObjectAsync<Order>($"order:{memberId}");
+        totalPrice = order.CalculateTotalAmount();
+        if (order == null)
+        {
+            NavigationManager.NavigateTo("/cart"); // Điều hướng lại nếu không tìm thấy đơn hàng
+        }
+    }
+
+    private void FinalizeOrder()
+    {
+        // Thực hiện thanh toán và lưu đơn hàng vào DB ở đây
+        NavigationManager.NavigateTo("/order-success"); // Chuyển hướng đến trang thành công
+    }
+}
+ *@
+@page "/order-confirmation"
+@using Services.Interface
+@using Services.Models.DTO
+@using BusinessObject.Entities
+@inject ICacheService CacheService
+@inject IOrderService OrderService
+@inject IVnPayService VnPayService
+@inject IMemberService MemberService
+@inject IHttpContextAccessor HttpContextAccessor
+@inject JwtAuthenticationStateProvider AuthStateProvider
+@inject NavigationManager NavigationManager
+
+<style>
+    .order-container {
+        width: 75%;
+        margin: 0 auto;
+        padding: 30px;
+        font-family: 'Roboto', sans-serif;
+        background-color: #f3f7fb;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    h3 {
+        text-align: center;
+        font-size: 28px;
+        color: #2C3E50;
+        margin-bottom: 30px;
+        font-weight: 500;
+    }
+
+    .order-summary {
+        background-color: #fff;
+        padding: 25px;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        margin-bottom: 30px;
+    }
+
+        .order-summary p {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+
+        .order-summary strong {
+            font-weight: bold;
+            color: #2980B9;
+        }
+
+    .order-info {
+        padding: 20px;
+        border-radius: 8px;
+        background-color: #ecf5f9;
+        box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.05);
+    }
+
+    .order-details {
+        margin-top: 40px;
+        padding-top: 20px;
+        border-top: 2px dashed #ddd;
+    }
+
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 30px;
+        background-color: #fff;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+        .table th,
+        .table td {
+            padding: 15px 20px;
+            text-align: left;
+            font-size: 16px;
+            color: #555;
+        }
+
+        .table th {
+            background-color: #2980B9;
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .table td {
+            background-color: #f9f9f9;
+            color: #333;
+        }
+
+        .table tr:nth-child(even) td {
+            background-color: #f2f2f2;
+        }
+
+        .table tr:hover td {
+            background-color: #f5f8ff;
+            cursor: pointer;
+            transform: scale(1.02);
+            transition: all 0.3s ease-in-out;
+        }
+
+    .order-total {
+        font-size: 20px;
+        font-weight: 600;
+        margin-top: 30px;
+        text-align: right;
+        color: #2980B9;
+    }
+
+    .order-info p {
+        font-size: 18px;
+    }
+
+    .order-summary strong {
+        color: #2c3e50;
+    }
+
+    button {
+        background-color: #28a745; /* Màu xanh lá cây */
+        color: white;
+        font-size: 16px;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: background-color 0.3s ease;
+        display: block;
+        margin-left: auto; /* Căn lề trái tự động để nút nằm bên phải */
+        margin-top: 20px;
+    }
+
+        button:hover {
+            background-color: #218838; /* Màu xanh đậm khi hover */
+        }
+
+        button:focus {
+            outline: none;
+        }
+
+</style>
+
+@if (order == null)
+{
+    <div class="order-container">
+        <p>Đơn hàng không tồn tại hoặc đã hết hạn.</p>
+    </div>
+}
+else
+{
+    <div class="order-container">
+        <h3>Xác nhận đơn hàng</h3>
+
+        <div class="order-summary">
+            <div class="order-info">
+                <p><strong>Company Name:</strong> @companyName</p>
+                <p><strong>Address:</strong> @($"{order.Member?.City}, {order.Member?.Country}")</p>
+            </div>
+        </div>
+
+        <div class="order-details">
+            <h4>Order Items</h4>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Product Id</th>
+                        <th>Unit Price</th>
+                        <th>Quantity</th>
+                        <th>Discount</th>
+                        <th>Total Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var detail in order.OrderDetails)
+                    {
+                        <tr>
+                            <td>@detail.ProductId</td>
+                            <td>@detail.UnitPrice.ToString("C")</td>
+                            <td>@detail.Quantity</td>
+                            <td>@(detail.UnitPrice * 100)%</td>
+                            <td>@detail.UnitPrice.ToString("C")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="order-total">
+            <p><strong>Total Order:</strong> @totalPrice.ToString("C")</p>
+        </div>
+        <div class="order-total">
+            <p><strong>Freight:</strong> @totalPrice.ToString("C")</p>
+        </div>
+        <div class="order-total">
+            <p><strong>Total Payment:</strong> @totalPrice.ToString("C")</p>
+        </div>
+
+        <button @onclick="FinalizeOrder">Hoàn tất đơn hàng</button>
+    </div>
+}
+
+@code {
+    private Order? order;
+    private Member member;
+    private int? memberId;
+    private string companyName;
+    private decimal totalPrice;
+    private string paymentUrl = string.Empty;
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            memberId = await AuthStateProvider.GetIdMemberAsync();
+            companyName =await AuthStateProvider.GetCompanyNameAsync();
+        }
+
+        // Lấy đơn hàng từ Cache
+        order = await CacheService.GetCacheObjectAsync<Order>($"order:{memberId}");
+        totalPrice = order.CalculateTotalAmount();
+        if (order == null)
+        {
+            // Điều hướng lại nếu không tìm thấy đơn hàng
+            NavigationManager.NavigateTo("/cart");
+        }
+    }
+
+
+    private async Task FinalizeOrder()
+    {
+        order = await OrderService.CreateOrderAsync(order);
+        NavigationManager.NavigateTo("/");
+        // var httpContext = HttpContextAccessor.HttpContext;
+        // paymentUrl = VnPayService.CreatePaymentUrl(httpContext, order.OrderId, order.CalculateTotalAmount() * 25000);
+        // NavigationManager.NavigateTo(paymentUrl);
+    }
+}

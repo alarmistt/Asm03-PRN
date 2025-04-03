@@ -8,23 +8,26 @@ namespace DataAccess.Implement
 {
     public class ProductRepository : IProductRepository
     {
-        private readonly EStoreContext _context;
+        private readonly IDbContextFactory<EStoreContext> _contextFactory;
 
-        public ProductRepository(EStoreContext context)
+        public ProductRepository(IDbContextFactory<EStoreContext> contextFactory)
         {
-            _context = context;
+            _contextFactory = contextFactory;
         }
+
         public async Task<IEnumerable<Product>> GetAllAsync()
         {
-            return await _context.Products
+            using var context = await _contextFactory.CreateDbContextAsync();
+            return await context.Products
                 .Include(p => p.Category)
                 .ToListAsync();
         }
 
         public async Task<(IEnumerable<Product> Products, int TotalCount)> GetAllPageAsync(int pageNumber, int pageSize)
         {
-            int totalCount = await _context.Products.CountAsync();
-            var products = await _context.Products
+            using var context = await _contextFactory.CreateDbContextAsync();
+            int totalCount = await context.Products.CountAsync();
+            var products = await context.Products
                 .Include(p => p.Category)
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
@@ -32,101 +35,86 @@ namespace DataAccess.Implement
             return (products, totalCount);
         }
 
-        public async Task<Product> GetByIdAsync(int id)
+        public async Task<Product?> GetByIdAsync(int id)
         {
-            return await _context.Products.FindAsync(id);
+            using var context = await _contextFactory.CreateDbContextAsync();
+            return await context.Products
+                .Include(p => p.Category)
+                .FirstOrDefaultAsync(p => p.ProductId == id);
         }
 
         public async Task<Product> AddAsync(Product product)
         {
-            Console.WriteLine($"Saving to DB: CategoryId={product.CategoryId}, Name={product.ProductName}, Weight={product.Weight}, " +
-                             $"UnitPrice={product.UnitPrice}, UnitsInStock={product.UnitsInStock}");
-            _context.Products.Add(product);
-            await _context.SaveChangesAsync();
+            using var context = await _contextFactory.CreateDbContextAsync();
+            context.Products.Add(product);
+            await context.SaveChangesAsync();
             return product;
         }
 
-        public async Task<Product> UpdateAsync(Product product)
+        public async Task<Product?> UpdateAsync(Product product)
         {
-            var existingProduct = await _context.Products.FindAsync(product.ProductId);
+            using var context = await _contextFactory.CreateDbContextAsync();
+            var existingProduct = await context.Products.FindAsync(product.ProductId);
             if (existingProduct == null)
             {
-                throw new Exception($"Không tìm thấy sản phẩm với ID {product.ProductId}");
+                return null;
             }
 
-            Console.WriteLine($"Existing: ProductId={existingProduct.ProductId}, CategoryId={existingProduct.CategoryId}, " +
-                             $"Name={existingProduct.ProductName}, Weight={existingProduct.Weight}, " +
-                             $"UnitPrice={existingProduct.UnitPrice}, UnitsInStock={existingProduct.UnitsInStock}");
-            Console.WriteLine($"New: ProductId={product.ProductId}, CategoryId={product.CategoryId}, " +
-                             $"Name={product.ProductName}, Weight={product.Weight}, " +
-                             $"UnitPrice={product.UnitPrice}, UnitsInStock={product.UnitsInStock}");
-
-            existingProduct.CategoryId = product.CategoryId;
-            existingProduct.ProductName = product.ProductName;
-            existingProduct.Weight = product.Weight;
-            existingProduct.UnitPrice = product.UnitPrice;
-            existingProduct.ImageUrl = product.ImageUrl;
-            existingProduct.UnitsInStock = product.UnitsInStock;
-
-            Console.WriteLine($"Updated: CategoryId={existingProduct.CategoryId}, Name={existingProduct.ProductName}, " +
-                             $"Weight={existingProduct.Weight}, UnitPrice={existingProduct.UnitPrice}, " +
-                             $"UnitsInStock={existingProduct.UnitsInStock}");
-
-            var rowsAffected = await _context.SaveChangesAsync();
-            if (rowsAffected == 0)
-            {
-                Console.WriteLine("Không có thay đổi nào được lưu vào cơ sở dữ liệu.");
-            }
-
+            // Cập nhật dữ liệu
+            context.Entry(existingProduct).CurrentValues.SetValues(product);
+            await context.SaveChangesAsync();
             return existingProduct;
         }
 
         public async Task<bool> DeleteAsync(int id)
         {
-            var product = await _context.Products.FindAsync(id);
+            using var context = await _contextFactory.CreateDbContextAsync();
+            var product = await context.Products.FindAsync(id);
             if (product == null)
             {
                 return false;
             }
 
-            var isProductInOrder = await IsProductInOrderDetailsAsync(id);
-            if (isProductInOrder)
+            // Kiểm tra xem sản phẩm có được sử dụng trong OrderDetail không
+            if (await context.OrderDetail.AnyAsync(od => od.ProductId == id))
             {
                 Console.WriteLine($"Product with ID {id} cannot be deleted because it is referenced in OrderDetail.");
                 return false;
             }
 
-            _context.Products.Remove(product);
-            var rowsAffected = await _context.SaveChangesAsync();
-            return rowsAffected > 0;
+            context.Products.Remove(product);
+            return await context.SaveChangesAsync() > 0;
+        }
+
+        public async Task<bool> ExistProductByCategoryId(int categoryId)
+        {
+            using var context = await _contextFactory.CreateDbContextAsync();
+            return await context.Products.AnyAsync(p => p.CategoryId == categoryId);
         }
 
         public async Task<bool> IsProductInOrderDetailsAsync(int id)
         {
-            return await _context.OrderDetail.AnyAsync(od => od.ProductId == id);
+            using var context = await _contextFactory.CreateDbContextAsync();
+            return await context.OrderDetail.AnyAsync(od => od.ProductId == id);
         }
 
-        public Task<bool> ExistProductByCategoryId(int categoryId)
-        {
-            bool isExist = _context.Products.Any(p => p.CategoryId == categoryId);
-            return Task.FromResult(isExist);
-        }
 
         public async Task<(IEnumerable<Product> Products, int TotalCount)> FilterProductsAsync(int pageNumber, int pageSize, string searchName, string searchPriceText, int? categoryId)
         {
-            var query = _context.Products.AsQueryable();
+            using var context = await _contextFactory.CreateDbContextAsync();
+            var query = context.Products.AsQueryable();
 
             if (!string.IsNullOrEmpty(searchName))
             {
                 query = query.Where(p => p.ProductName.Contains(searchName));
             }
 
-            if (!string.IsNullOrEmpty(searchPriceText))
+            if (!string.IsNullOrEmpty(searchPriceText) && decimal.TryParse(searchPriceText, out decimal searchPrice))
             {
-                query = query.Where(p => p.UnitPrice.ToString().Contains(searchPriceText));
+                query = query.Where(p => p.UnitPrice == searchPrice);
             }
 
-            if (categoryId.HasValue && categoryId.Value != 0)
+            if (categoryId.HasValue && categoryId.Value > 0)
             {
                 query = query.Where(p => p.CategoryId == categoryId.Value);
             }
@@ -140,4 +128,5 @@ namespace DataAccess.Implement
             return (products, totalCount);
         }
     }
+
 }

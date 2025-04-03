@@ -1,0 +1,208 @@
+﻿@page "/myorders"
+@using BusinessObject.Entities
+@using Services.Interface
+@using Microsoft.AspNetCore.SignalR.Client
+@inject IOrderService OrderService
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+@inject JwtAuthenticationStateProvider AuthStateProvider
+
+@rendermode InteractiveServer
+
+@code {
+    private List<Order> orders = new();
+    private int currentPage = 1;
+    private int totalPages = 1;
+    private const int pageSize = 5;
+    private bool hasPreviousPage => currentPage > 1;
+    private bool hasNextPage => currentPage < totalPages;
+    private int? memberId;
+    private HubConnection? hubConnection;
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            memberId = await AuthStateProvider.GetIdMemberAsync();
+        }
+
+        await LoadOrders();
+        await SetupSignalR();
+    }
+
+    private async Task LoadOrders()
+    {
+        try
+        {
+            await InvokeAsync(async () =>
+            {
+                if (memberId.HasValue)
+                {
+                    var paginatedList = await OrderService.GetOrdersByMemberId(memberId.Value, currentPage, pageSize);
+                    orders = paginatedList.Items.ToList();
+                    totalPages = paginatedList.TotalPages;
+                }
+                StateHasChanged();
+            });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching orders: {ex.Message}");
+        }
+    }
+
+    private async Task SetupSignalR()
+    {
+        if (hubConnection is { State: HubConnectionState.Connected })
+        {
+            return; // Tránh đăng ký lại nếu đã kết nối
+        }
+
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl(NavigationManager.ToAbsoluteUri("/chatHub"))
+            .WithAutomaticReconnect()
+            .Build();
+
+        hubConnection.On("ReceiveMessage", async () =>
+        {
+            Console.WriteLine("🔄 Order list updated!");
+            await Task.Delay(300);
+            await LoadOrders();
+            StateHasChanged();
+        });
+
+        await hubConnection.StartAsync();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.DisposeAsync();
+        }
+    }
+
+    private async Task PreviousPage()
+    {
+        if (hasPreviousPage)
+        {
+            currentPage--;
+            await LoadOrders();
+        }
+    }
+
+    private void ViewOrder(int orderId)
+    {
+        Console.WriteLine($"Navigating to /order/{orderId}");
+        NavigationManager.NavigateTo($"/order/{orderId}");
+    }
+
+    private async Task NextPage()
+    {
+        if (hasNextPage)
+        {
+            currentPage++;
+            await LoadOrders();
+        }
+    }
+
+
+}
+
+<PageTitle>My Orders</PageTitle>
+
+<div class="container my-5">
+    <div class="card shadow-lg border-0 rounded-3" style="background-color: #ffffff; max-width: 1000px; margin: 0 auto;">
+        <div class="card-header text-white text-center py-4 rounded-top-3" style="background: linear-gradient(135deg, #4a90e2, #50b5e9);">
+            <h3 class="mb-0 fw-light">My Orders</h3>
+        </div>
+        <div class="card-body p-4">
+            @if (orders == null || !orders.Any())
+            {
+                <div class="text-center py-5">
+                    <p class="text-muted fst-italic">No orders available.</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle text-center rounded-3 overflow-hidden">
+                        <thead style="background: #4a90e2; color: white;">
+                            <tr>
+                                <th scope="col">Order ID</th>
+                                <th scope="col">Order Date</th>
+                                <th scope="col">Status</th>
+                                <th scope="col">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var order in orders)
+                            {
+                                <tr class="table-row">
+                                    <td class="fw-semibold">@order.OrderId</td>
+                                    <td>@order.OrderDate.ToShortDateString()</td>
+                                    <td>@order.Status</td>
+                                    <td>
+                                        <button class="btn btn-outline-detail btn-sm mx-1" @onclick="() => ViewOrder(order.OrderId)">
+                                            <i class="bi bi-pencil-square"></i> View Detail
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mt-4">
+                    <button class="btn btn-outline-primary" @onclick="PreviousPage" disabled="@(!hasPreviousPage)">
+                        Previous
+                    </button>
+                    <span>Page @currentPage of @totalPages</span>
+                    <button class="btn btn-outline-primary" @onclick="NextPage" disabled="@(!hasNextPage)">
+                        Next
+                    </button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<style>
+    .table-row:hover {
+        background-color: rgba(74, 144, 226, 0.1);
+        transition: background-color 0.3s ease;
+    }
+
+    /* Nút chi tiết */
+    .btn-outline-detail {
+        border: 2px solid #007bff; /* Màu viền xanh */
+        color: #007bff; /* Màu chữ xanh */
+        background-color: transparent; /* Nền trong suốt */
+        padding: 8px 16px; /* Khoảng cách padding */
+        border-radius: 25px; /* Đường viền bo tròn */
+        font-size: 14px; /* Kích thước chữ */
+        transition: all 0.3s ease; /* Hiệu ứng chuyển động */
+    }
+
+        .btn-outline-detail:hover {
+            background-color: #007bff; /* Màu nền khi hover */
+            color: white; /* Màu chữ khi hover */
+            border-color: #0056b3; /* Màu viền khi hover */
+        }
+
+        .btn-outline-detail i {
+            margin-right: 5px; /* Khoảng cách giữa biểu tượng và chữ */
+        }
+
+    .btn-primary {
+        background-color: #4a90e2;
+        border-color: #4a90e2;
+    }
+
+        .btn-primary:hover {
+            background-color: #357abd;
+            border-color: #357abd;
+        }
+</style>

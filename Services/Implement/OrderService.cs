@@ -1,4 +1,5 @@
 ﻿using BusinessObject.Entities;
+using Core;
 using DataAccess.Interface;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
@@ -66,6 +67,7 @@ namespace Services.Implement
                         );
                     }
                 }
+                await _hubContext.Clients.All.SendAsync("ReceiveMessage");
             }
             catch (Exception ex)
             {
@@ -173,6 +175,7 @@ namespace Services.Implement
             await _orderRepository.AddAsync(order);
 
             await _hubContext.Clients.All.SendAsync("ReceiveMessage");
+
             return order;
         }
 
@@ -186,20 +189,44 @@ namespace Services.Implement
             // Validate Order trước khi cập nhật
             order.ValidateOrder();
 
+            // Lấy danh sách OrderDetail hiện tại từ DB
+
+            var existingDetails = order.OrderDetails;
+
+            var newDetails = order.OrderDetails ?? new List<OrderDetail>();
+
+            // Tìm OrderDetail cần xóa (có trong DB nhưng không có trong danh sách mới)
+            var detailsToDelete = existingDetails.Where(ed => !newDetails.Any(nd => nd.ProductId == ed.ProductId)).ToList();
+
+            // Tìm OrderDetail cần thêm mới (có trong danh sách mới nhưng chưa có trong DB)
+            var detailsToAdd = newDetails.Where(nd => !existingDetails.Any(ed => ed.ProductId == nd.ProductId)).ToList();
+
+            // Tìm OrderDetail cần cập nhật (có cả trong DB lẫn danh sách mới)
+            var detailsToUpdate = newDetails.Where(nd => existingDetails.Any(ed => ed.ProductId == nd.ProductId)).ToList();
+
+            // Xóa OrderDetail không còn trong danh sách mới
+            foreach (var detail in detailsToDelete)
+            {
+                await _orderDetailRepository.DeleteAsync(detail.OrderId);
+            }
+
+            // Thêm OrderDetail mới
+            foreach (var detail in detailsToAdd)
+            {
+                detail.OrderId = order.OrderId;
+                await _orderDetailRepository.AddAsync(detail);
+            }
+
+            // Cập nhật OrderDetail
+            foreach (var detail in detailsToUpdate)
+            {
+                await _orderDetailRepository.UpdateAsync(detail);
+            }
+
             // Cập nhật thông tin Order
             await _orderRepository.UpdateAsync(order);
 
-            // Xóa các OrderDetail cũ và thêm lại các OrderDetail mới (tránh lỗi sync dữ liệu)
-            if (order.OrderDetails != null && order.OrderDetails.Any())
-            {
-                await _orderDetailRepository.DeleteByOrderIdAsync(order.OrderId);
-
-                foreach (var orderDetail in order.OrderDetails)
-                {
-                    orderDetail.OrderId = order.OrderId;
-                    await _orderDetailRepository.AddAsync(orderDetail);
-                }
-            }
+            await _hubContext.Clients.All.SendAsync("ReceiveMessage");
         }
 
         public async Task DeleteOrderAsync(int orderId)
@@ -209,11 +236,24 @@ namespace Services.Implement
 
             // Xóa đơn hàng
             await _orderRepository.DeleteAsync(orderId);
+            await _hubContext.Clients.All.SendAsync("ReceiveMessage");
         }
 
         public async Task UpdateOrderStatus(int orderId, string status)
         {
             await _orderRepository.UpdateOrderStatus(orderId, status);
+            await _hubContext.Clients.All.SendAsync("ReceiveMessage");
+        }
+
+        public async Task<PaginatedList<Order>> GetOrders(int pageNumber, int pageSize)
+        {
+            return await _orderRepository.GetOrders(pageNumber, pageSize);
+        }
+
+        public async Task<PaginatedList<Order>> GetOrdersByMemberId(int memberId, int pageNumber, int pageSize)
+        {
+            return await _orderRepository.GetOrdersByMemberId(memberId, pageNumber, pageSize);
+
         }
     }
 }

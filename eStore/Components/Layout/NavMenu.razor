@@ -1,4 +1,4 @@
-﻿<div class="top-row ps-3 navbar navbar-dark bg-primary shadow-lg">
+﻿@* <div class="top-row ps-3 navbar navbar-dark bg-primary shadow-lg">
     <div class="container-fluid">
         <a class="navbar-brand text-white fw-bold" href="/">eStore</a>
         <label for="nav-toggle" class="navbar-toggler p-2">
@@ -46,5 +46,99 @@
 </div>
 
 <!-- Add Font Awesome Icons Library -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"> *@
+
+@inject JwtAuthenticationStateProvider AuthStateProvider
+@using Microsoft.AspNetCore.Components.Authorization
+
+<div class="top-row ps-3 navbar navbar-dark bg-primary shadow-lg">
+    <div class="container-fluid">
+        <a class="navbar-brand text-white fw-bold" href="/">eStore</a>
+        <label for="nav-toggle" class="navbar-toggler p-2">
+            <span class="navbar-toggler-icon"></span>
+        </label>
+    </div>
+</div>
+
+<input type="checkbox" title="Navigation menu" class="d-none" id="nav-toggle" />
+
+<div class="nav-scrollable bg-light shadow" onclick="document.querySelector('#nav-toggle').click()">
+    <nav class="d-flex flex-column p-3">
+        <div class="nav-item py-2">
+            <NavLink class="nav-link d-flex align-items-center text-dark" href="" Match="NavLinkMatch.All">
+                <i class="fas fa-home me-2"></i> Home
+            </NavLink>
+        </div>
+
+        @if (userRole == "Admin")
+        {
+            <div class="nav-item py-2">
+                <NavLink class="nav-link d-flex align-items-center text-dark" href="categories">
+                    <i class="fas fa-list-alt me-2"></i> Categories
+                </NavLink>
+            </div>
+            <div class="nav-item py-2">
+                <NavLink class="nav-link d-flex align-items-center text-dark" href="members">
+                    <i class="fas fa-user-friends me-2"></i> Members
+                </NavLink>
+            </div>
+            <div class="nav-item py-2">
+                <NavLink class="nav-link d-flex align-items-center text-dark" href="products">
+                    <i class="fas fa-box-open me-2"></i> Products
+                </NavLink>
+            </div>
+            <div class="nav-item py-2">
+                <NavLink class="nav-link d-flex align-items-center text-dark" href="orders">
+                    <i class="fas fa-shopping-cart me-2"></i> Order Manager
+                </NavLink>
+            </div>
+            <div class="nav-item py-2">
+                <NavLink class="nav-link d-flex align-items-center text-dark" href="sales-report">
+                    <i class="fas fa-file-invoice-dollar me-2"></i> Sales Report
+                </NavLink>
+            </div>
+
+        }
+
+        @if (userRole == "User")
+        {
+            <div class="nav-item py-2">
+                <NavLink class="nav-link d-flex align-items-center text-dark" href="cart">
+                    <i class="fas fa-shopping-cart me-2"></i> Cart
+                </NavLink>
+            </div>
+            <div class="nav-item py-2">
+                <NavLink class="nav-link d-flex align-items-center text-dark" href="myorders">
+                    <i class="fas fa-box me-2"></i> My Orders
+                </NavLink>
+            </div>
+            <div class="nav-item py-2">
+                <NavLink class="nav-link d-flex align-items-center text-dark" href="myaccount">
+                    <i class="fas fa-user-circle me-2"></i> My Account
+                </NavLink>
+            </div>
+
+        }
+    </nav>
+</div>
+
+<!-- Add Font Awesome Icons Library -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
+
+
+@code {
+    private string userRole = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            userRole = await AuthStateProvider.GetRoleAsync();
+        }
+
+    }
+}

@@ -1,4 +1,5 @@
 ﻿using BusinessObject.Entities;
+using Core;
 using Services.Models.SaleReport;
 using System;
 using System.Collections.Generic;
@@ -19,5 +20,7 @@ namespace Services.Interface
         Task<List<SalesReportDto>> GetSalesReport(DateTime startDate, DateTime endDate);
         Task CheckAndUpdatePendingOrders();
         Task UpdateOrderStatus(int orderId, string status);
+        Task<PaginatedList<Order>> GetOrders(int pageNumber, int pageSize);
+        Task<PaginatedList<Order>> GetOrdersByMemberId(int memberId, int pageNumber, int pageSize);
     }
 }

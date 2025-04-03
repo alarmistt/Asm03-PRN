@@ -10,9 +10,9 @@ namespace Services.Interface
     public interface IOrderDetailService
     {
         Task<IEnumerable<OrderDetail>> GetAllAsync();
-        Task<OrderDetail?> GetByIdAsync(int orderId, int productId);
+        Task<OrderDetail?> GetByIdAsync(int orderId);
         Task AddAsync(OrderDetail orderDetail);
         Task UpdateAsync(OrderDetail orderDetail);
-        Task DeleteAsync(int orderId, int productId);
+        Task DeleteAsync(int orderId);
     }
 }

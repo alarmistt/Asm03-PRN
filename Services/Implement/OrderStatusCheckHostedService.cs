@@ -22,7 +22,7 @@ namespace Services.Implement
         public Task StartAsync(CancellationToken cancellationToken)
         {
             _timer = new Timer(CheckOrders, null, TimeSpan.Zero,
-                TimeSpan.FromMinutes(5));
+                TimeSpan.FromMinutes(1));
             return Task.CompletedTask;
         }
 

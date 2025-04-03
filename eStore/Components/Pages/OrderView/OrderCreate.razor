@@ -1,7 +1,6 @@
-﻿@page "/order/create"
+﻿@* @page "/order/create"
 @using BusinessObject.Entities
 @using Services.Interface
-@using Services.Models.DTO
 @inject IOrderService OrderService
 @inject IMemberService MemberService
 @inject IProductService ProductService
@@ -10,6 +9,7 @@
 @inject IHttpContextAccessor HttpContextAccessor
 @rendermode InteractiveServer
 <PageTitle>Order</PageTitle>
+
 
 <div class="container mt-5">
     <div class="card shadow-sm border-0 rounded bg-light">
@@ -123,8 +123,8 @@
 @code {
     private Order order = new() { OrderDetails = new List<OrderDetail>() };
     private OrderDetail newOrderDetail = new();
-    private List<MemberDTO> Members = new();
-    private List<ProductDTO> Products = new();
+    private List<Member> Members = new();
+    private List<Product> Products = new();
     private List<OrderDetail> TempOrderDetails = new();
     private string errorMessage = string.Empty;
     private string paymentUrl = string.Empty;
@@ -146,7 +146,7 @@
     {
         Members = (await MemberService.GetMembers()).ToList();
         Products = (await ProductService.GetAllProductsAsync()).ToList();
-        
+
     }
 
     private void UpdateUnitPrice()
@@ -195,6 +195,220 @@
         }
 
         // Chuyển danh sách tạm vào order thực
+        order.OrderDetails = new List<OrderDetail>(TempOrderDetails);
+
+        try
+        {
+            order = await OrderService.CreateOrderAsync(order);
+
+            var httpContext = HttpContextAccessor.HttpContext;
+            paymentUrl = VnPayService.CreatePaymentUrl(httpContext, order.OrderId, order.CalculateTotalAmount() * 25000);
+            NavigationManager.NavigateTo(paymentUrl);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error occurred: {ex.Message}";
+        }
+    }
+
+    private void Cancel()
+    {
+        NavigationManager.NavigateTo("/orders");
+    }
+}
+ *@
+
+            @page "/order/create"
+@using BusinessObject.Entities
+@using Services.Interface
+@using Services.Models.DTO
+@inject IOrderService OrderService
+@inject IMemberService MemberService
+@inject IProductService ProductService
+@inject IVnPayService VnPayService
+@inject NavigationManager NavigationManager
+@inject IHttpContextAccessor HttpContextAccessor
+@rendermode InteractiveServer
+<PageTitle>Create Order</PageTitle>
+
+<div class="container mt-5">
+    <div class="card shadow-sm border-0 rounded bg-light">
+        <div class="card-header bg-warning-subtle text-dark text-center py-3 rounded-top">
+            <h3 class="mb-0">Create Order</h3>
+        </div>
+        <div class="card-body">
+            <EditForm Model="order" OnValidSubmit="HandleValidSubmit">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="mb-3">
+                    <label for="memberId" class="form-label">Member</label>
+                    <InputSelect id="memberId" class="form-control" @bind-Value="order.MemberId">
+                        <option value="">-- Select Member --</option>
+                        @foreach (var member in Members)
+                        {
+                            <option value="@member.MemberId">@member.CompanyName</option>
+                        }
+                    </InputSelect>
+                </div>
+
+                <div class="mb-3">
+                    <label for="requiredDate" class="form-label">Required Date</label>
+                    <InputDate id="requiredDate" class="form-control" @bind-Value="order.RequiredDate" />
+                </div>
+
+                <div class="mb-3">
+                    <label for="shippedDate" class="form-label">Shipped Date</label>
+                    <InputDate id="shippedDate" class="form-control" @bind-Value="order.ShippedDate" />
+                </div>
+
+                <div class="mb-3">
+                    <label for="freight" class="form-label">Freight</label>
+                    <InputNumber id="freight" class="form-control" @bind-Value="order.Freight" />
+                </div>
+
+                <h4>Order Details</h4>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Quantity</th>
+                            <th>Unit Price</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in TempOrderDetails)
+                        {
+                            <tr>
+                                <td>@Products.FirstOrDefault(p => p.ProductId == item.ProductId)?.ProductName</td>
+                                <td>@item.Quantity</td>
+                                <td>@item.UnitPrice.ToString("C")</td>
+                                <td>
+                                    <button type="button" class="btn btn-danger btn-sm" @onclick="() => RemoveTempOrderDetail(item)">Remove</button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+
+                <div class="row">
+                    <div class="col-md-4">
+                        <label>Product</label>
+                        <InputSelect class="form-control" @bind-Value="newOrderDetail.ProductId">
+                            <option value="">-- Select Product --</option>
+                            @foreach (var product in Products)
+                            {
+                                <option value="@product.ProductId">@product.ProductName</option>
+                            }
+                        </InputSelect>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label>Quantity</label>
+                        <InputNumber class="form-control" @bind-Value="Quantity" />
+                    </div>
+
+                    <div class="col-md-3">
+                        <label>Unit Price</label>
+                        <span class="form-control-plaintext">@newOrderDetail.UnitPrice.ToString("C")</span>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="button" class="btn btn-success" @onclick="AddOrderDetail">Add</button>
+                    </div>
+                </div>
+
+                <br />
+
+                <button type="submit" class="btn btn-primary">Create Order</button>
+                <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancel</button>
+            </EditForm>
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="alert alert-danger mt-3">@errorMessage</div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private Order order = new() { OrderDetails = new List<OrderDetail>() };
+    private OrderDetail newOrderDetail = new();
+    private List<MemberDTO> Members = new();
+    private List<ProductDTO> Products = new();
+    private List<OrderDetail> TempOrderDetails = new();
+    private string errorMessage = string.Empty;
+    private string paymentUrl = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Members = (await MemberService.GetMembers()).ToList();
+        Products = (await ProductService.GetAllProductsAsync()).ToList();
+    }
+    private int Quantity
+    {
+        get => newOrderDetail.Quantity;
+        set
+        {
+            if (value >= 0)
+            {
+                newOrderDetail.Quantity = value;
+                UpdateUnitPrice();
+            }
+        }
+    }
+
+
+    private void UpdateUnitPrice()
+    {
+        var selectedProduct = Products.FirstOrDefault(p => p.ProductId == newOrderDetail.ProductId);
+        if (selectedProduct != null)
+        {
+            newOrderDetail.UnitPrice = selectedProduct.UnitPrice * newOrderDetail.Quantity;
+            StateHasChanged(); // Cập nhật UI ngay lập tức
+        }
+    }
+
+    private void AddOrderDetail()
+    {
+        if (newOrderDetail.ProductId > 0 && newOrderDetail.Quantity > 0)
+        {
+            // Kiểm tra xem sản phẩm đã có trong danh sách chưa, nếu có thì cộng dồn số lượng
+            var existingItem = TempOrderDetails.FirstOrDefault(d => d.ProductId == newOrderDetail.ProductId);
+            if (existingItem != null)
+            {
+                existingItem.Quantity += newOrderDetail.Quantity;
+                existingItem.UnitPrice = existingItem.Quantity * Products.First(p => p.ProductId == existingItem.ProductId).UnitPrice;
+            }
+            else
+            {
+                TempOrderDetails.Add(new OrderDetail
+                    {
+                        ProductId = newOrderDetail.ProductId,
+                        Quantity = newOrderDetail.Quantity,
+                        UnitPrice = newOrderDetail.UnitPrice
+                    });
+            }
+
+            newOrderDetail = new OrderDetail(); // Reset form
+            StateHasChanged(); // Cập nhật giao diện
+        }
+    }
+
+    private void RemoveTempOrderDetail(OrderDetail item)
+    {
+        TempOrderDetails.Remove(item);
+        StateHasChanged();
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        if (TempOrderDetails.Count == 0)
+        {
+            errorMessage = "Order must have at least one order detail.";
+            return;
+        }
+
         order.OrderDetails = new List<OrderDetail>(TempOrderDetails);
 
         try
