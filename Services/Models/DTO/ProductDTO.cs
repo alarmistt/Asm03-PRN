@@ -28,6 +28,10 @@ namespace Services.Models.DTO
         [Required, Range(0, int.MaxValue)]
         public int UnitsInStock { get; set; }
 
+        public string ImageUrl { get; set; }
+
+        public DateTimeOffset? DeletedDate { get; set; } = null;
+
         public CategoryDTO Category { get; set; }
     }
 }
