@@ -20,6 +20,7 @@ namespace DataAccess.Implement
             using var context = await _contextFactory.CreateDbContextAsync();
             return await context.Products
                 .Include(p => p.Category)
+                .OrderByDescending(p => p.ProductId)
                 .ToListAsync();
         }
 
@@ -29,6 +30,7 @@ namespace DataAccess.Implement
             int totalCount = await context.Products.CountAsync();
             var products = await context.Products
                 .Include(p => p.Category)
+                .OrderByDescending(p => p.ProductId) 
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();

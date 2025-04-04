@@ -41,21 +41,16 @@ public class JwtAuthenticationStateProvider : AuthenticationStateProvider
     }
     public async Task<string?> GetRoleAsync()
     {
-        // Lấy token từ session storage
         var token = await _sessionStorage.GetItemAsync<string>("authToken");
 
-        // Nếu không có token, trả về null
         if (string.IsNullOrEmpty(token))
             return null;
 
-        // Khởi tạo JwtSecurityTokenHandler để giải mã token
         var handler = new JwtSecurityTokenHandler();
         var jwtToken = handler.ReadJwtToken(token);
 
-        // Lấy claim với type là "role"
         var roleClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimsIdentity.DefaultRoleClaimType);
 
-        // Trả về giá trị của role nếu có, nếu không có trả về null
         return roleClaim?.Value;
     }
 
@@ -106,7 +101,6 @@ public class JwtAuthenticationStateProvider : AuthenticationStateProvider
                 await _sessionStorage.RemoveItemAsync("authToken");
                 return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
             }
-
             ClaimsIdentity identity = new ClaimsIdentity(jwtToken.Claims, "jwt");
             ClaimsPrincipal user = new ClaimsPrincipal(identity);
             return new AuthenticationState(user);

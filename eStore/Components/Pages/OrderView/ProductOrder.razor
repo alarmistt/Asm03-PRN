@@ -1,6 +1,4 @@
-﻿
-
-@page "/productsOrder"
+﻿@page "/productsOrder"
 @using Services.Models.DTO
 @using Services.Interface
 @inject IProductService ProductService
@@ -15,7 +13,7 @@
 
 <div class="container-fluid my-5 px-4">
     <div class="card border-0 shadow" style="border-radius: 12px; background-color: #ffffff;">
-        <div class="card-header py-4 px-5" style="background: linear-gradient(135deg, #4B5EAA, #6B7280); color: white; border-radius: 12px 12px 0 0;">
+        <div class="card-header py-4 px-5" style="background: linear-gradient(135deg, #4a90e2, #6B7280); color: white; border-radius: 12px 12px 0 0;">
             <div class="d-flex justify-content-between align-items-center">
                 <h3 class="mb-0 fw-normal">Product Order</h3>
                 <div class="d-flex align-items-center gap-3">
@@ -66,11 +64,11 @@
                                 <div class="position-relative d-flex justify-content-center pt-4">
                                     @if (!string.IsNullOrEmpty(product.ImageUrl))
                                     {
-                                        <img src="@product.ImageUrl" alt="@product.ProductName" style="width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 5px solid #4B5EAA;" />
+                                        <img src="@product.ImageUrl" alt="@product.ProductName" style="width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 5px solid #4a90e2;" />
                                     }
                                     else
                                     {
-                                        <div class="image-circle" style="width: 150px; height: 150px; border-radius: 50%; background: linear-gradient(135deg, #4B5EAA, #6B7280); display: flex; align-items: center; justify-content: center; border: 5px solid #4B5EAA;">
+                                        <div class="image-circle" style="width: 150px; height: 150px; border-radius: 50%; background: linear-gradient(135deg, #4a90e2, #6B7280); display: flex; align-items: center; justify-content: center; border: 5px solid #4a90e2;">
                                             <i class="fas fa-spray-can" style="font-size: 80px; color: #ffffff;"></i>
                                         </div>
                                     }
@@ -80,13 +78,13 @@
                                     <p class="card-text text-muted" style="font-size: 0.9rem;">
                                         @categories.FirstOrDefault(c => c.CategoryId == product.CategoryId)?.CategoryName | @product.Weight
                                     </p>
-                                    <h6 class="card-price" style="color: #4B5EAA; font-size: 1.5rem; font-weight: 700;">@product.UnitPrice.ToString("C")</h6>
+                                    <h6 class="card-price" style="color: #4a90e2; font-size: 1.5rem; font-weight: 700;">@product.UnitPrice.ToString("C")</h6>
                                     <p class="stock-status mt-2">
                                         <span class="badge px-3 py-1" style="@(product.UnitsInStock > 0 ? "background-color: #dcfce7; color: #16a34a;" : "background-color: #fee2e2; color: #dc2626;") border-radius: 20px;">
                                             @(product.UnitsInStock > 0 ? $"In Stock: {product.UnitsInStock}" : "Out of Stock")
                                         </span>
                                     </p>
-                                    <button class="btn btn-add-to-cart mt-3 w-100" style="background-color: #4B5EAA; color: white; border-radius: 25px; font-weight: 500;" @onclick="() => AddToCart(product.ProductId)">
+                                    <button class="btn btn-add-to-cart mt-3 w-100" style="background-color: #4a90e2; color: white; border-radius: 25px; font-weight: 500;" @onclick="() => AddToCart(product.ProductId)">
                                         Add to Cart
                                     </button>
                                 </div>
@@ -193,7 +191,7 @@
     .custom-pagination .page-link {
         border-radius: 50% !important;
         border: 1px solid #d1d5db;
-        color: #4B5EAA;
+        color: #4a90e2;
         background-color: #ffffff;
         padding: 8px 14px;
         font-weight: 500;
@@ -202,16 +200,16 @@
     }
 
         .custom-pagination .page-link:hover {
-            background-color: #4B5EAA;
+            background-color: #4a90e2;
             color: #ffffff;
-            border-color: #4B5EAA;
+            border-color: #4a90e2;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
         }
 
     .custom-pagination .page-item.active .page-link {
-        background: linear-gradient(135deg, #4B5EAA, #6B7280);
+        background: linear-gradient(135deg, #4a90e2, #6B7280);
         color: #ffffff;
-        border-color: #4B5EAA;
+        border-color: #4a90e2;
     }
 
     .custom-pagination .page-item.disabled .page-link {
@@ -227,7 +225,7 @@
     }
 
     .form-select:focus {
-        border-color: #4B5EAA;
+        border-color: #4a90e2;
         box-shadow: 0 0 8px rgba(75, 94, 170, 0.2);
     }
 </style>
