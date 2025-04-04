@@ -9,7 +9,9 @@
 
 <h3>Sales Report</h3>
 
-
+<CascadingAuthenticationState>
+            <AuthorizeView Roles="Admin">
+                <Authorized Context="SaleReportContext">
 <div class="row mb-3">
     <div class="col-md-3">
         <label for="startDate" class="form-label">Start Date</label>
@@ -78,7 +80,12 @@ else if (hasError)
 {
     <div class="alert alert-danger">Error loading sales data. Please try again.</div>
 }
-
+        </Authorized>
+        <NotAuthorized>
+            <p class="text-danger">You do not have permission.</p>
+        </NotAuthorized>
+    </AuthorizeView>
+</CascadingAuthenticationState>
 @code {
     private DateTime startDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
     private DateTime endDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.DaysInMonth(DateTime.Now.Year, DateTime.Now.Month));

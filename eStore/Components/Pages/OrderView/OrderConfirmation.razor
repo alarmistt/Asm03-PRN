@@ -144,7 +144,9 @@
         }
 
 </style>
-
+<CascadingAuthenticationState>
+            <AuthorizeView>
+                <Authorized Context="ConfirmContext">
 @if (Cart == null || Cart.Items.Count == 0)
 {
     <div class="order-container">
@@ -201,6 +203,12 @@ else
         <button @onclick="FinalizeOrder">Place Order</button>
     </div>
 }
+        </Authorized>
+        <NotAuthorized>
+            <p class="text-danger">You do not have permission.</p>
+        </NotAuthorized>
+    </AuthorizeView>
+</CascadingAuthenticationState>
 
 @code {
     private Order order = new() { OrderDetails = new List<OrderDetail>() };

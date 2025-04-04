@@ -164,7 +164,9 @@
         };
     }
 }
-
+<CascadingAuthenticationState>
+            <AuthorizeView>
+                <Authorized Context="OrdersContext">
 @if (order != null)
 {
     <div class="order-container">
@@ -230,3 +232,9 @@ else
 {
     <p>Loading order details...</p>
 }
+        </Authorized>
+        <NotAuthorized>
+            <p class="text-danger">You do not have permission.</p>
+        </NotAuthorized>
+    </AuthorizeView>
+</CascadingAuthenticationState>
