@@ -8,6 +8,9 @@
 @inject NavigationManager NavigationManager
 @rendermode InteractiveServer
 
+<CascadingAuthenticationState>
+            <AuthorizeView Roles="Admin">
+                <Authorized Context="ProductsEditContext">
 <div class="container-fluid my-5 px-4">
     <div class="card border-0 shadow" style="border-radius: 12px; background-color: #ffffff;">
         <div class="card-header py-4 px-5" style="background: linear-gradient(135deg, #4a90e2, #6B7280); color: white; border-radius: 12px 12px 0 0;">
@@ -103,7 +106,12 @@
         </div>
     </div>
 </div>
-
+        </Authorized>
+        <NotAuthorized>
+            <p class="text-danger">You do not have permission.</p>
+        </NotAuthorized>
+    </AuthorizeView>
+</CascadingAuthenticationState>
 <style>
     .form-control:focus, .form-select:focus {
         border-color: #4a90e2;
