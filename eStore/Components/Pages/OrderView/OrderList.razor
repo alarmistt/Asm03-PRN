@@ -3,7 +3,7 @@
 @using Microsoft.AspNetCore.Authorization
 @using Services.Interface
 @inject IOrderService OrderService
-@inject IVnPayService VnPayService 
+@inject IVnPayService VnPayService
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
 @inject IHttpContextAccessor HttpContextAccessor
@@ -13,8 +13,8 @@
 <PageTitle>Order</PageTitle>
 
 <CascadingAuthenticationState>
-	<AuthorizeView Roles="Admin">
-		<Authorized Context="authContext">
+    <AuthorizeView Roles="Admin">
+        <Authorized Context="authContext">
             <div class="container my-5">
                 <div class="card shadow-lg border-0 rounded-3" style="background-color: #ffffff; max-width: 1200px; margin: 0 auto;">
                     <div class="card-header text-white text-center py-4 rounded-top-3" style="background: linear-gradient(135deg, #4a90e2, #50b5e9);">
@@ -396,7 +396,7 @@
         {
             Console.WriteLine($"Completing order: {orderId}");
             await OrderService.UpdateOrderStatus(orderId, "Completed");
-            await LoadOrders(); 
+            await LoadOrders();
         }
         catch (Exception ex)
         {

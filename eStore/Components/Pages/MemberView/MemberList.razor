@@ -9,8 +9,11 @@
 @inject JwtAuthenticationStateProvider AuthenticationStateProvider
 @rendermode InteractiveServer
 
+<CascadingAuthenticationState>
+            <AuthorizeView Roles="Admin">
+                <Authorized Context="ListAccountContext">
 <div class="container my-5">
-    <div class="card shadow-lg border-0 rounded-3" style="background-color: #ffffff; max-width: 1200px; margin: 0 auto;">
+    <div class="card shadow-lg border-0 rounded-3" style="background-color: #ffffff; width: 100%; margin: 0 auto;">
         <div class="card-header text-white text-center py-4 rounded-top-3" style="background: linear-gradient(135deg, #4a90e2, #50b5e9);">
             <h3 class="mb-0 fw-light">Members Management</h3>
         </div>
@@ -120,6 +123,12 @@
         </div>
     </div>
 </div>
+        </Authorized>
+        <NotAuthorized>
+            <p class="text-danger">You do not have permission.</p>
+        </NotAuthorized>
+    </AuthorizeView>
+</CascadingAuthenticationState>
 
 <style>
     body {
@@ -148,7 +157,7 @@
     .custom-pagination .page-link {
         border-radius: 50% !important;
         border: 1px solid #d1d5db;
-        color: #4B5EAA;
+        color: #4a90e2;
         background-color: #ffffff;
         padding: 8px 14px;
         font-weight: 500;
@@ -157,16 +166,16 @@
     }
 
         .custom-pagination .page-link:hover {
-            background-color: #4B5EAA;
+            background-color: #4a90e2;
             color: #ffffff;
-            border-color: #4B5EAA;
+            border-color: #4a90e2;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
         }
 
     .custom-pagination .page-item.active .page-link {
-        background: linear-gradient(135deg, #4B5EAA, #6B7280);
+        background: linear-gradient(135deg, #4a90e2, #6B7280);
         color: #ffffff;
-        border-color: #4B5EAA;
+        border-color: #4a90e2;
     }
 
     .custom-pagination .page-item.disabled .page-link {

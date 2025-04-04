@@ -9,7 +9,7 @@ using Services.Implement;
 using Services.Interface;
 using StackExchange.Redis;
 using System.Text;
-using DataAccess.Base;
+
 
 namespace eStore.DI
 {
@@ -21,6 +21,7 @@ namespace eStore.DI
             services.AddJwtAuthentication(configuration);
             services.AddAuthenticationStateProvider();
             services.AddRedis(configuration);
+            services.AddCloudinary(configuration);
         }
 
 
