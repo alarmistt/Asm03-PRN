@@ -12,7 +12,19 @@
 <PageTitle>Home</PageTitle>
 <!-- Include FontAwesome for the product icon -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2Lw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+@if (!string.IsNullOrEmpty(successMessage))
+{
+    <div class="alert alert-success" role="alert">
+        @successMessage
+    </div>
+}
 
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger" role="alert">
+        @errorMessage
+    </div>
+}
 <div class="container-fluid my-5 px-4">
     <div class="card border-0 shadow" style="border-radius: 12px; background-color: #ffffff;">
         <div class="card-header py-4 px-5" style="background: linear-gradient(135deg, #4a90e2, #50b5e9); color: white; border-radius: 12px 12px 0 0;">
@@ -237,7 +249,8 @@
     private HubConnection? hubConnection;
 
     private int? memberId;
-
+    private string successMessage = string.Empty; 
+    private string errorMessage = string.Empty; 
     private int currentPage = 1;
     private int pageSize = 6;
     private int totalCount = 0;
@@ -286,8 +299,8 @@
                     var (products, count) = await ProductService.FilterProductsAsync(
                         currentPage,
                         pageSize,
-                        null, // No search by name
-                        null, // No search by price
+                        null, 
+                        null, 
                         selectedCategoryId
                     );
                     filteredProducts = products.ToList();
@@ -313,14 +326,33 @@
 
     private async void AddToCart(int productId)
     {
-        ProductDTO productDTO = await ProductService.GetProductByIdAsync(productId);
-        var item = new CartItemDTO
-            {
-                ProductDTO = productDTO,
-                Quantity = 1
-            };
+        try
+        {
+            ProductDTO productDTO = await ProductService.GetProductByIdAsync(productId);
+            var item = new CartItemDTO
+                {
+                    ProductDTO = productDTO,
+                    Quantity = 1
+                };
 
-        await CartService.AddToCartAsync(memberId.ToString(), item);
+
+            await CartService.AddToCartAsync(memberId.ToString(), item);
+
+
+            successMessage = "Product " + productDTO.ProductName + " added to cart successfully!";
+            errorMessage = string.Empty;
+
+
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to add product to cart: {ex.Message}";
+            successMessage = string.Empty;
+
+
+            StateHasChanged();
+        }
     }
 
     private async Task SetupSignalR()

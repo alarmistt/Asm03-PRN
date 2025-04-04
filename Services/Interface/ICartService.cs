@@ -16,6 +16,5 @@ namespace Services.Interface
         Task ClearCartAsync(string userId);
 
         Task UpdateCartItemQuantityAsync(string userId, int productId, int quantityChange);
-        Task CreateOrderFromCartAsync(string userId);
     }
 }

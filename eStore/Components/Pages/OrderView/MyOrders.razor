@@ -3,8 +3,10 @@
 @using Services.Interface
 @using Microsoft.AspNetCore.SignalR.Client
 @inject IOrderService OrderService
+@inject IVnPayService VnPayService
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
+@inject IHttpContextAccessor HttpContextAccessor
 @inject JwtAuthenticationStateProvider AuthStateProvider
 
 @rendermode InteractiveServer
@@ -57,7 +59,7 @@
     {
         if (hubConnection is { State: HubConnectionState.Connected })
         {
-            return; // Tránh đăng ký lại nếu đã kết nối
+            return; 
         }
 
         hubConnection = new HubConnectionBuilder()
@@ -81,6 +83,24 @@
         if (hubConnection is not null)
         {
             await hubConnection.DisposeAsync();
+        }
+    }
+    private async Task PayOrder(int orderId)
+    {
+        try
+        {
+            var order = orders.FirstOrDefault(o => o.OrderId == orderId);
+            if (order != null)
+            {
+                var httpContext = HttpContextAccessor.HttpContext;
+                string paymentUrl = VnPayService.CreatePaymentUrl(httpContext, order.OrderId, order.CalculateTotalAmount() * 25000);
+                NavigationManager.NavigateTo(paymentUrl);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error initiating payment: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("alert", $"Error initiating payment: {ex.Message}");
         }
     }
 
@@ -146,6 +166,12 @@
                                     <td>@order.OrderDate.ToShortDateString()</td>
                                     <td>@order.Status</td>
                                     <td>
+                                                    @if (order.Status == "Pending")
+                                                    {
+                                                        <button class="btn btn-outline-primary btn-sm mx-1" @onclick="() => PayOrder(order.OrderId)">
+                                                            <i class="bi bi-credit-card"></i> Pay
+                                                        </button>
+                                                    }
                                         <button class="btn btn-outline-detail btn-sm mx-1" @onclick="() => ViewOrder(order.OrderId)">
                                             <i class="bi bi-pencil-square"></i> View Detail
                                         </button>
@@ -182,25 +208,27 @@
         transition: background-color 0.3s ease;
     }
 
-    /* Nút chi tiết */
-    .btn-outline-detail {
-        border: 2px solid #007bff; /* Màu viền xanh */
-        color: #007bff; /* Màu chữ xanh */
-        background-color: transparent; /* Nền trong suốt */
-        padding: 8px 16px; /* Khoảng cách padding */
-        border-radius: 25px; /* Đường viền bo tròn */
-        font-size: 14px; /* Kích thước chữ */
-        transition: all 0.3s ease; /* Hiệu ứng chuyển động */
+    .btn-outline-detail,
+    .btn-outline-primary {
+        border: 2px solid #007bff;
+        color: #007bff;
+        background-color: transparent;
+        padding: 8px 16px;
+        border-radius: 25px;
+        font-size: 14px;
+        transition: all 0.3s ease;
     }
 
-        .btn-outline-detail:hover {
-            background-color: #007bff; /* Màu nền khi hover */
-            color: white; /* Màu chữ khi hover */
-            border-color: #0056b3; /* Màu viền khi hover */
+        .btn-outline-detail:hover,
+        .btn-outline-primary :hover {
+            background-color: #007bff;
+            color: white;
+            border-color: #0056b3;
         }
 
-        .btn-outline-detail i {
-            margin-right: 5px; /* Khoảng cách giữa biểu tượng và chữ */
+        .btn-outline-detail i,
+        .btn-outline-primary i {
+            margin-right: 5px;
         }
 
     .btn-primary {

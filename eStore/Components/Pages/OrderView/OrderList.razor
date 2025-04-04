@@ -3,10 +3,8 @@
 @using Microsoft.AspNetCore.Authorization
 @using Services.Interface
 @inject IOrderService OrderService
-@inject IVnPayService VnPayService
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
-@inject IHttpContextAccessor HttpContextAccessor
 @using Microsoft.AspNetCore.SignalR.Client
 @inject JwtAuthenticationStateProvider AuthenticationStateProvider
 @rendermode InteractiveServer
@@ -21,15 +19,6 @@
                         <h3 class="mb-0 fw-light">Orders Management</h3>
                     </div>
                     <div class="card-body p-4">
-                        <div class="d-flex justify-content-between align-items-center mb-4">
-                            <h5 class="text-muted fw-normal">Manage your orders efficiently</h5>
-                            <button class="btn btn-primary fw-semibold rounded-3 px-4" @onclick="() => CreateOrder()">
-                                <i class="bi bi-plus-lg me-2"></i> Add Order
-                            </button>
-                        </div>
-
-
-
                         @if (orders == null || !orders.Any())
                         {
                             <div class="text-center py-5">
@@ -43,7 +32,7 @@
                                     <thead style="background: #4a90e2; color: white;">
                                         <tr>
                                             <th scope="col">Order ID</th>
-                                            <th scope="col">Member ID</th>
+                                            <th scope="col">Company Name</th>
                                             <th scope="col">Order Date</th>
                                             <th scope="col">Required Date</th>
                                             <th scope="col">Shipped Date</th>
@@ -57,7 +46,7 @@
                                         {
                                             <tr class="table-row">
                                                 <td class="fw-semibold">@order.OrderId</td>
-                                                <td>@order.MemberId</td>
+                                                <td>@order.Member.CompanyName</td>
                                                 <td>@order.OrderDate.ToShortDateString()</td>
                                                 <td>@order.RequiredDate.ToShortDateString()</td>
                                                 <td>@(order.ShippedDate?.ToShortDateString() ?? "N/A")</td>
@@ -67,16 +56,10 @@
                                                     <button class="btn btn-outline-detail btn-sm mx-1" @onclick="() => ViewOrder(order.OrderId)">
                                                         <i class="bi bi-pencil-square"></i> View Detail
                                                     </button>
-                                                    <button class="btn btn-outline-warning btn-sm mx-1" @onclick="() => EditOrder(order.OrderId)">
-                                                        <i class="bi bi-pencil-square"></i> Edit
-                                                    </button>
-                                                    <button class="btn btn-outline-danger btn-sm mx-1" @onclick="() => DeleteOrder(order.OrderId)">
-                                                        <i class="bi bi-trash"></i> Delete
-                                                    </button>
-                                                    @if (order.Status == "Pending")
+                                                    @if (order.Status != "Completed")
                                                     {
-                                                        <button class="btn btn-outline-primary btn-sm mx-1" @onclick="() => PayOrder(order.OrderId)">
-                                                            <i class="bi bi-credit-card"></i> Pay
+                                                        <button class="btn btn-outline-danger btn-sm mx-1" @onclick="() => DeleteOrder(order.OrderId)">
+                                                            <i class="bi bi-trash"></i> Delete
                                                         </button>
                                                     }
                                                     @if (order.Status == "Processing")
@@ -118,23 +101,22 @@
         transition: background-color 0.3s ease;
     }
 
-    /* Container chứa các button */
-    /* Container chứa các button */
+    
     .button-group {
-        display: flex; /* Sử dụng flexbox để các nút nằm trên cùng một hàng */
-        flex-wrap: nowrap; /* Ngăn các button xuống hàng dưới */
-        gap: 8px; /* Khoảng cách giữa các button */
-        justify-content: center; /* Căn giữa các button theo chiều ngang */
-        align-items: center; /* Căn giữa các button theo chiều dọc */
+        display: flex; 
+        flex-wrap: nowrap; 
+        gap: 8px; 
+        justify-content: center; 
+        align-items: center; 
     }
 
         .button-group button {
-            white-space: nowrap; /* Ngăn không cho chữ trong button bị cắt khi xuống dòng */
-            min-width: 100px; /* Đảm bảo mỗi button có chiều rộng tối thiểu */
-            text-align: center; /* Căn giữa chữ và biểu tượng trong button */
+            white-space: nowrap; 
+            min-width: 100px; 
+            text-align: center; 
         }
 
-    /* Các nút bấm */
+
     .btn-outline-detail,
     .btn-outline-warning,
     .btn-outline-danger,
@@ -148,15 +130,15 @@
         border-radius: 25px;
     }
 
-        /* Hiệu ứng hover cho các button */
+        
         .btn-outline-detail:hover,
         .btn-outline-warning:hover,
         .btn-outline-danger:hover,
         .btn-outline-primary:hover,
         .btn-outline-success:hover {
-            background-color: #007bff; /* Màu nền khi hover */
-            color: white; /* Màu chữ khi hover */
-            border-color: #0056b3; /* Màu viền khi hover */
+            background-color: #007bff; 
+            color: white; 
+            border-color: #0056b3; 
         }
 
         .btn-outline-detail i,
@@ -164,30 +146,30 @@
         .btn-outline-danger i,
         .btn-outline-primary i,
         .btn-outline-success i {
-            margin-right: 5px; /* Khoảng cách giữa biểu tượng và chữ */
+            margin-right: 5px; 
         }
 
 
 
 
     .btn-outline-detail {
-        border: 2px solid #007bff; /* Màu viền xanh */
-        color: #007bff; /* Màu chữ xanh */
-        background-color: transparent; /* Nền trong suốt */
-        padding: 8px 16px; /* Khoảng cách padding */
-        border-radius: 25px; /* Đường viền bo tròn */
-        font-size: 14px; /* Kích thước chữ */
-        transition: all 0.3s ease; /* Hiệu ứng chuyển động */
+        border: 2px solid #007bff; 
+        color: #007bff; 
+        background-color: transparent; 
+        padding: 8px 16px; 
+        border-radius: 25px; 
+        font-size: 14px; 
+        transition: all 0.3s ease; 
     }
 
         .btn-outline-detail:hover {
-            background-color: #007bff; /* Màu nền khi hover */
-            color: white; /* Màu chữ khi hover */
-            border-color: #0056b3; /* Màu viền khi hover */
+            background-color: #007bff; 
+            color: white; 
+            border-color: #0056b3; 
         }
 
         .btn-outline-detail i {
-            margin-right: 5px; /* Khoảng cách giữa biểu tượng và chữ */
+            margin-right: 5px; 
         }
 
     .btn-primary {
@@ -208,66 +190,14 @@
     private const int pageSize = 5;
     private bool hasPreviousPage => currentPage > 1;
     private bool hasNextPage => currentPage < totalPages;
-    private string? paymentMessage;
-    private string? iconSuccess;
-    private int orderIdToUpdate;
     private HubConnection? hubConnection;
 
     protected override async Task OnInitializedAsync()
     {
-        var uri = new Uri(NavigationManager.Uri);
-        var queryParams = System.Web.HttpUtility.ParseQueryString(uri.Query);
-        string? responseCode = queryParams["vnp_ResponseCode"];
-        if (!string.IsNullOrEmpty(responseCode))
-        {
-            string orderIdStr = queryParams["vnp_OrderInfo"] ?? "0";
-            orderIdToUpdate = int.TryParse(orderIdStr, out var id) ? id : 0;
-
-            if (responseCode == "00")
-            {
-                paymentMessage = "Payment Successful!";
-                iconSuccess = "success";
-                if (orderIdToUpdate > 0)
-                {
-                    await OrderService.UpdateOrderStatus(orderIdToUpdate, "Processing");
-                    Console.WriteLine($"Order {orderIdToUpdate} updated to Processing");
-                }
-            }
-            else
-            {
-                paymentMessage = $"Payment Failed!";
-                iconSuccess = "error";
-            }
-            await LoadOrders();
-        }
-        else
-        {
-            await LoadOrders();
-        }
-
+        await LoadOrders();
         await SetupSignalR();
     }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender && !string.IsNullOrEmpty(paymentMessage))
-        {
-            // Gọi SweetAlert2 để hiển thị thông báo đẹp hơn
-            await JSRuntime.InvokeVoidAsync("Swal.fire", new
-            {
-                title = "Thông báo",
-                text = paymentMessage,
-                icon = iconSuccess, // Bạn có thể thay đổi thành 'error', 'warning', v.v.
-                confirmButtonText = "OK"
-            });
-
-            // Sau khi người dùng nhấn OK, xóa query string trong URL
-            var currentUrl = NavigationManager.Uri.Split('?')[0];  // Lấy phần trước dấu hỏi (URL không có query string)
-            NavigationManager.NavigateTo(currentUrl, forceLoad: true);  // Cập nhật trang với URL mới
-
-            paymentMessage = null;
-        }
-    }
 
     private async Task LoadOrders()
     {
@@ -293,19 +223,6 @@
         NavigationManager.NavigateTo($"/order/{orderId}");
     }
 
-    private void CreateOrder()
-    {
-        Console.WriteLine("✅ Button Clicked! Navigating to /order/create");
-        StateHasChanged();
-        NavigationManager.NavigateTo("/order/create");
-    }
-
-    private void EditOrder(int orderId)
-    {
-        Console.WriteLine($"Navigating to /order/edit/{orderId}");
-        NavigationManager.NavigateTo($"/order/edit/{orderId}");
-    }
-
     private async Task DeleteOrder(int orderId)
     {
         try
@@ -320,32 +237,11 @@
         }
     }
 
-    private async Task PayOrder(int orderId)
-    {
-        try
-        {
-            // Lấy thông tin đơn hàng từ danh sách orders
-            var order = orders.FirstOrDefault(o => o.OrderId == orderId);
-            if (order != null)
-            {
-                // Giả định Order có phương thức CalculateTotalAmount() như trong /order/create
-                var httpContext = HttpContextAccessor.HttpContext;
-                string paymentUrl = VnPayService.CreatePaymentUrl(httpContext, order.OrderId, order.CalculateTotalAmount() * 25000);
-                NavigationManager.NavigateTo(paymentUrl);
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error initiating payment: {ex.Message}");
-            await JSRuntime.InvokeVoidAsync("alert", $"Error initiating payment: {ex.Message}");
-        }
-    }
-
     private async Task SetupSignalR()
     {
         if (hubConnection is { State: HubConnectionState.Connected })
         {
-            return; // Tránh đăng ký lại nếu đã kết nối
+            return; 
         }
 
         hubConnection = new HubConnectionBuilder()
