@@ -12,8 +12,7 @@ namespace Services.Implement
     public class CartService : ICartService
     {
         private readonly ICacheService _cacheService;
-        private readonly TimeSpan _cartExpiration = TimeSpan.FromDays(7); // Giữ giỏ hàng trong 7 ngày
-
+        private readonly TimeSpan _cartExpiration = TimeSpan.FromMinutes(15); 
         public CartService(ICacheService cacheService)
         {
             _cacheService = cacheService;
