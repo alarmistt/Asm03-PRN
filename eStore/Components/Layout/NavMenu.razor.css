@@ -1,4 +1,4 @@
-/* Navbar toggler (hamburger button) */
+
 .navbar-toggler {
     appearance: none;
     cursor: pointer;
@@ -12,20 +12,19 @@
     z-index: 1050;
 }
 
-/* Top bar */
+
 .top-row {
     height: 3.5rem;
     background-color: rgba(0, 0, 0, 0.4);
 }
 
-/* Navbar branding */
 .navbar-brand {
     font-size: 1.25rem;
     font-weight: bold;
     letter-spacing: 0.5px;
 }
 
-/* Icons with background svg */
+
 .bi {
     width: 1.25rem;
     height: 1.25rem;
@@ -36,7 +35,7 @@
     background-repeat: no-repeat;
 }
 
-/* Nav item styling */
+
 .nav-item {
     font-size: 0.95rem;
     padding: 0.3rem 0;
@@ -50,7 +49,7 @@
         padding-bottom: 1rem;
     }
 
-    /* Nav links */
+   
     .nav-item ::deep .nav-link {
         display: flex;
         align-items: center;
@@ -66,13 +65,13 @@
             color: #0056b3;
         }
 
-    /* Active link */
+    
     .nav-item ::deep a.active {
         background-color: #0d6efd;
         color: white;
     }
 
-/* Sidebar container */
+
 .nav-scrollable {
     display: none;
     background-color: #f8f9fa;
