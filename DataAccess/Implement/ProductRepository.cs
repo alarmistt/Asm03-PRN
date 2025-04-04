@@ -102,16 +102,19 @@ namespace DataAccess.Implement
         public async Task<(IEnumerable<Product> Products, int TotalCount)> FilterProductsAsync(int pageNumber, int pageSize, string searchName, string searchPriceText, int? categoryId)
         {
             using var context = await _contextFactory.CreateDbContextAsync();
-            var query = context.Products.AsQueryable();
+            var query = context.Products
+                .Include(p => p.Category) // Ensure Category is included
+                .AsQueryable();
 
             if (!string.IsNullOrEmpty(searchName))
             {
                 query = query.Where(p => p.ProductName.Contains(searchName));
             }
 
-            if (!string.IsNullOrEmpty(searchPriceText) && decimal.TryParse(searchPriceText, out decimal searchPrice))
+            if (!string.IsNullOrEmpty(searchPriceText))
             {
-                query = query.Where(p => p.UnitPrice == searchPrice);
+                // Convert UnitPrice to string and check if it contains the searchPriceText
+                query = query.Where(p => p.UnitPrice.ToString().Contains(searchPriceText));
             }
 
             if (categoryId.HasValue && categoryId.Value > 0)
